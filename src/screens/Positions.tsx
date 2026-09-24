@@ -25,7 +25,7 @@ export default function Positions() {
   return (
     <div className="positions-screen">
       <h2>Vaste Posities Instellen</h2>
-      <p className="help-text">Selecteer welke speler op welke positie hoort. Bij reset worden spelers random neerzet.</p>
+      <p className="help-text">Na een reset staat een speler met een vaste positie altijd daar. De rest wordt willekeurig verdeeld.</p>
 
       <div className="positions-list">
         {fieldPlayers.map(player => (
@@ -38,11 +38,14 @@ export default function Positions() {
                 className="position-select"
               >
                 <option value="">Geen vaste positie</option>
-                {POSITIONS.map(pos => (
-                  <option key={pos} value={pos}>
-                    {POSITIE_LABEL[pos]} ({pos})
-                  </option>
-                ))}
+                {POSITIONS.map(pos => {
+                  const bezetDoor = fieldPlayers.find(p => p.id !== player.id && vastePosities[p.id] === pos)
+                  return (
+                    <option key={pos} value={pos} disabled={!!bezetDoor}>
+                      {POSITIE_LABEL[pos]}{bezetDoor ? ` (${bezetDoor.naam})` : ''}
+                    </option>
+                  )
+                })}
               </select>
             </div>
           </div>

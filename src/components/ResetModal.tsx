@@ -18,7 +18,7 @@ export default function ResetModal({ onConfirm, onCancel }: ResetModalProps) {
           </div>
           <div className="info-item">
             <span className="info-icon">🔀</span>
-            <span className="info-text">Spelers worden willekeurig neergeplaatst</span>
+            <span className="info-text">Vaste posities blijven, de rest wordt willekeurig verdeeld</span>
           </div>
         </div>
 

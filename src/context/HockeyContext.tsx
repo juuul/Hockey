@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Player, Wissel } from '../types'
+import { Player, Position, Wissel, VELD_VOLGORDE } from '../types'
 
 interface HockeyContextType {
   spelers: Player[]
@@ -139,25 +139,33 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const resetWisselingen = () => {
     remember()
-    const fieldPlayers = spelers.filter(s => !s.isKeeper)
-    const shuffled = [...fieldPlayers]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-    }
-    const positions = ['LW', 'RW', 'LM', 'CM', 'RM', 'LBM', 'CBM', 'RBM']
     const placed = new Map<string, Player>()
-    shuffled.forEach((s, i) => {
-      if (i < positions.length) {
-        const positie = positions[i]
-        placed.set(s.id, { ...s, inVeld: true, positie: positie as any, wisselCount: 0 })
-      } else {
-        placed.set(s.id, { ...s, inVeld: false, wisselCount: 1 })
+    const vrij = [...VELD_VOLGORDE]
+    const veldspelers = spelers.filter(s => !s.isKeeper)
+
+    veldspelers.forEach(s => {
+      const vast = vastePosities[s.id] as Position | undefined
+      if (vast && vrij.includes(vast)) {
+        vrij.splice(vrij.indexOf(vast), 1)
+        placed.set(s.id, { ...s, inVeld: true, positie: vast, wisselCount: 0 })
       }
     })
+
+    const rest = veldspelers.filter(s => !placed.has(s.id))
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[rest[i], rest[j]] = [rest[j], rest[i]]
+    }
+    rest.forEach((s, i) => {
+      placed.set(s.id, i < vrij.length
+        ? { ...s, inVeld: true, positie: vrij[i], wisselCount: 0 }
+        : { ...s, inVeld: false, wisselCount: 1 })
+    })
+
     setSpelers(spelers.map(s => placed.get(s.id) ?? { ...s, wisselCount: 0 }))
     setWisselingen([])
   }
+
 
   const setVastePosities = (spelerId: string, positie: string | null) => {
     const newVaste = { ...vastePosities }

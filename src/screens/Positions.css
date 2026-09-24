@@ -13,7 +13,7 @@
 }
 
 .help-text {
-  font-size: 16px;
+  font-size: var(--base-readable-size);
   color: #666;
   margin: 0;
 }
@@ -48,12 +48,12 @@
 .position-select {
   width: 100%;
   padding: 12px;
-  font-size: 18px;
+  font-size: var(--base-readable-size);
   border: 1px solid #ddd;
   border-radius: 6px;
   background: white;
   cursor: pointer;
-  min-height: 50px;
+  min-height: 60px;
 }
 
 .position-select:focus {
@@ -79,6 +79,6 @@
   }
 
   .position-select {
-    font-size: 18px;
+    font-size: var(--base-readable-size);
   }
 }

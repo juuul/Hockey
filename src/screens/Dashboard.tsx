@@ -54,7 +54,7 @@ export default function Dashboard() {
   const handleConfirmReset = () => {
     resetWisselingen()
     setShowResetModal(false)
-    setToastMessage('✓ Wissels gereset & spelers willekeurig neergeplaatst')
+    setToastMessage('✓ Wissels gereset & opstelling verdeeld')
     setShowToast(true)
   }
 
