@@ -128,8 +128,8 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     if (!a || !b) return
     remember()
     setSpelers(spelers.map(s => {
-      if (s.id === idA) return { ...s, positie: b.positie, isKeeper: b.isKeeper }
-      if (s.id === idB) return { ...s, positie: a.positie, isKeeper: a.isKeeper }
+      if (s.id === idA) return { ...s, positie: b.positie, isKeeper: b.isKeeper, inVeld: b.inVeld }
+      if (s.id === idB) return { ...s, positie: a.positie, isKeeper: a.isKeeper, inVeld: a.inVeld }
       return s
     }))
   }
