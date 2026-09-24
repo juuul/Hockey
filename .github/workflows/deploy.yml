@@ -1,8 +1,9 @@
 name: Deploy to GitHub Pages
 
+# main -> /Hockey/ (live), test -> /Hockey/test/. Pages heeft één site per repo, dus beide branches worden altijd samen gebouwd.
 on:
   push:
-    branches: [main]
+    branches: [main, test]
   workflow_dispatch:
 
 permissions:
@@ -22,14 +23,25 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: live
+      - uses: actions/checkout@v4
+        with:
+          ref: test
+          path: test
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - name: Build live
+        working-directory: live
+        run: npm ci && npm run build
+      - name: Build test
+        working-directory: test
+        run: npm ci && npm run build -- --mode test
+      - run: cp -r live/dist site && cp -r test/dist site/test
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
       - id: deployment
         uses: actions/deploy-pages@v4

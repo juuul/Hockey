@@ -132,3 +132,8 @@ interface Wissel {
 
 ## Volgende Stap
 Review UI mockup → wijzigingen aanpassen → code starten!
+
+## Deploy
+- `test` → https://juuul.github.io/Hockey/test/ — elke wijziging wordt hier direct naartoe gepusht.
+- `main` → https://juuul.github.io/Hockey/ (live) — alleen mergen/pushen als de gebruiker dat expliciet zegt.
+- De workflow bouwt altijd beide branches samen tot één Pages-site. Test gebruikt eigen localStorage-sleutels (`hockey_test_*`).

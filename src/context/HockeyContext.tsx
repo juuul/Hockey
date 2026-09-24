@@ -16,6 +16,9 @@ interface HockeyContextType {
   setVastePosities: (spelerId: string, positie: string | null) => void
 }
 
+// Test en live delen dezelfde origin (github.io), dus aparte opslag
+const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
+
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 
 const INITIAL_PLAYERS: Player[] = [
@@ -34,17 +37,17 @@ const INITIAL_PLAYERS: Player[] = [
 
 export function HockeyProvider({ children }: { children: React.ReactNode }) {
   const [spelers, setSpelers] = useState<Player[]>(() => {
-    const saved = localStorage.getItem('hockey_spelers')
+    const saved = localStorage.getItem(`${OPSLAG}_spelers`)
     return saved ? JSON.parse(saved) : INITIAL_PLAYERS
   })
 
   const [wisselingen, setWisselingen] = useState<Wissel[]>(() => {
-    const saved = localStorage.getItem('hockey_wisselingen')
+    const saved = localStorage.getItem(`${OPSLAG}_wisselingen`)
     return saved ? JSON.parse(saved) : []
   })
 
   const [vastePosities, setVastePositiesState] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem('hockey_vaste_posities')
+    const saved = localStorage.getItem(`${OPSLAG}_vaste_posities`)
     return saved ? JSON.parse(saved) : {}
   })
 
@@ -63,15 +66,15 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    localStorage.setItem('hockey_spelers', JSON.stringify(spelers))
+    localStorage.setItem(`${OPSLAG}_spelers`, JSON.stringify(spelers))
   }, [spelers])
 
   useEffect(() => {
-    localStorage.setItem('hockey_wisselingen', JSON.stringify(wisselingen))
+    localStorage.setItem(`${OPSLAG}_wisselingen`, JSON.stringify(wisselingen))
   }, [wisselingen])
 
   useEffect(() => {
-    localStorage.setItem('hockey_vaste_posities', JSON.stringify(vastePosities))
+    localStorage.setItem(`${OPSLAG}_vaste_posities`, JSON.stringify(vastePosities))
   }, [vastePosities])
 
   const addSpeler = (naam: string) => {
