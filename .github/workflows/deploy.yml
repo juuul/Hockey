@@ -1,6 +1,6 @@
 name: Deploy to GitHub Pages
 
-# main -> /Hockey/ (live), test -> /Hockey/test/. Pages heeft één site per repo, dus beide branches worden altijd samen gebouwd.
+# main -> juliaan.eu/hockey/ (live), test -> juliaan.eu/hockey/test/. Pages heeft één site per repo, dus beide branches worden altijd samen gebouwd.
 on:
   push:
     branches: [main, test]
@@ -39,7 +39,12 @@ jobs:
       - name: Build test
         working-directory: test
         run: npm ci && npm run build -- --mode test
-      - run: cp -r live/dist site && cp -r test/dist site/test
+      - name: Samenvoegen (juliaan.eu/hockey/ en /hockey/test/)
+        run: |
+          mkdir site
+          cp -r live/dist site/hockey
+          cp -r test/dist site/hockey/test
+          echo '<!doctype html><meta http-equiv="refresh" content="0; url=/hockey/"><a href="/hockey/">Hockey</a>' > site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
