@@ -3,7 +3,6 @@ import { useHockey } from '../context/HockeyContext'
 import { Position } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
-import Toast from '../components/Toast'
 import './Dashboard.css'
 
 export default function Dashboard() {
@@ -12,8 +11,6 @@ export default function Dashboard() {
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
   const [showResetModal, setShowResetModal] = useState(false)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
   const keeper = spelers.find(s => s.isKeeper)
@@ -54,8 +51,6 @@ export default function Dashboard() {
   const handleConfirmReset = () => {
     resetWisselingen()
     setShowResetModal(false)
-    setToastMessage('✓ Wissels gereset & opstelling verdeeld')
-    setShowToast(true)
   }
 
   return (
@@ -159,14 +154,6 @@ export default function Dashboard() {
         <ResetModal
           onConfirm={handleConfirmReset}
           onCancel={() => setShowResetModal(false)}
-        />
-      )}
-
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type="success"
-          onClose={() => setShowToast(false)}
         />
       )}
     </div>
