@@ -5,7 +5,7 @@ import { nieuweOpstelling } from '../opstelling'
 interface HockeyContextType {
   spelers: Player[]
   wisselingen: Wissel[]
-  vastePosities: Record<string, string>
+  vastePosities: Record<string, string[]>
   addSpeler: (naam: string) => void
   deleteSpeler: (id: string) => void
   toggleSpeler: (id: string) => void
@@ -14,7 +14,7 @@ interface HockeyContextType {
   verplaats: (idA: string, idB: string) => void
   undo: () => void
   canUndo: boolean
-  setVastePosities: (spelerId: string, positie: string | null) => void
+  setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
 }
 
 // Test en live delen dezelfde origin (github.io), dus aparte opslag
@@ -47,9 +47,11 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     return saved ? JSON.parse(saved) : []
   })
 
-  const [vastePosities, setVastePositiesState] = useState<Record<string, string>>(() => {
+  const [vastePosities, setVastePositiesState] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem(`${OPSLAG}_vaste_posities`)
-    return saved ? JSON.parse(saved) : {}
+    const parsed: Record<string, string | string[]> = saved ? JSON.parse(saved) : {}
+    // Oudere versie bewaarde één positie per speler als string
+    return Object.fromEntries(Object.entries(parsed).map(([id, v]) => [id, typeof v === 'string' ? [v, ''] : v]))
   })
 
   const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[] }[]>([])
@@ -147,18 +149,18 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  const setVastePosities = (spelerId: string, positie: string | null) => {
+  const setVastePositie = (spelerId: string, keuze: number, positie: string | null) => {
+    const keuzes = [...(vastePosities[spelerId] ?? ['', ''])]
+    keuzes[keuze] = positie ?? ''
     const newVaste = { ...vastePosities }
-    if (positie === null) {
-      delete newVaste[spelerId]
-    } else {
-      newVaste[spelerId] = positie
-    }
+    if (keuzes.every(k => !k)) delete newVaste[spelerId]
+    else newVaste[spelerId] = keuzes
     setVastePositiesState(newVaste)
   }
 
+
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, toggleSpeler, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePosities }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, toggleSpeler, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie }}>
       {children}
     </HockeyContext.Provider>
   )

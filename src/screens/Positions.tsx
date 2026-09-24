@@ -1,52 +1,59 @@
 import { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
-import { POSITIE_LABEL, Position } from '../types'
+import { POSITIE_LABEL, Position, VELD_VOLGORDE } from '../types'
 import Toast from '../components/Toast'
 import './Positions.css'
 
-const POSITIONS: Position[] = ['LW', 'RW', 'LM', 'CM', 'RM', 'LBM', 'CBM', 'RBM']
+const KEUZE_NAAM = ['1e keuze', '2e keuze']
 
 export default function Positions() {
-  const { spelers, vastePosities, setVastePosities } = useHockey()
+  const { spelers, vastePosities, setVastePositie } = useHockey()
   const fieldPlayers = spelers.filter(s => !s.isKeeper)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
-  const handleSetPosition = (spelerId: string, spelersNaam: string, positie: Position | null) => {
-    setVastePosities(spelerId, positie)
-    if (positie) {
-      setToastMessage(`✓ ${spelersNaam} → ${POSITIE_LABEL[positie]}`)
-    } else {
-      setToastMessage(`✓ Vaste positie verwijderd voor ${spelersNaam}`)
-    }
+  const handleSetPosition = (spelerId: string, naam: string, keuze: number, positie: Position | null) => {
+    setVastePositie(spelerId, keuze, positie)
+    setToastMessage(`✓ ${naam}: ${KEUZE_NAAM[keuze]} ${positie ? POSITIE_LABEL[positie] : 'gewist'}`)
     setShowToast(true)
   }
 
   return (
     <div className="positions-screen">
-      <h2>Vaste Posities Instellen</h2>
-      <p className="help-text">Bij een reset wordt eerst geloot wie begint. Begint een speler met een vaste positie, dan staat die daar. Hebben meerdere spelers dezelfde positie, dan wordt geloot wie hem krijgt.</p>
+      <h2>Voorkeursposities</h2>
+      <p className="help-text">Bij een reset wordt eerst geloot wie begint. Wie begint, krijgt zo mogelijk de 1e keuze, anders de 2e. Hebben meerdere spelers dezelfde keuze, dan wordt geloot wie hem krijgt.</p>
 
       <div className="positions-list">
         {fieldPlayers.map(player => (
           <div key={player.id} className="position-item">
             <div className="player-name">{player.naam}</div>
             <div className="position-buttons">
-              <select
-                value={vastePosities[player.id] || ''}
-                onChange={(e) => handleSetPosition(player.id, player.naam, e.target.value ? (e.target.value as Position) : null)}
-                className="position-select"
-              >
-                <option value="">Geen vaste positie</option>
-                {POSITIONS.map(pos => {
-                  const ook = fieldPlayers.filter(p => p.id !== player.id && vastePosities[p.id] === pos).map(p => p.naam)
-                  return (
-                    <option key={pos} value={pos}>
-                      {POSITIE_LABEL[pos]}{ook.length ? ` (ook ${ook.join(', ')})` : ''}
-                    </option>
-                  )
-                })}
-              </select>
+              {[0, 1].map(keuze => {
+                const waarde = (vastePosities[player.id]?.[keuze] ?? '') as Position | ''
+                return (
+                  <label key={keuze} className={`keuze ${waarde ? 'gekozen' : ''}`}>
+                    <span className="keuze-tekst">
+                      {waarde ? `${keuze + 1}. ${POSITIE_LABEL[waarde]}` : KEUZE_NAAM[keuze]}
+                    </span>
+                    <select
+                      className="keuze-select"
+                      aria-label={`${KEUZE_NAAM[keuze]} voor ${player.naam}`}
+                      value={waarde}
+                      onChange={(e) => handleSetPosition(player.id, player.naam, keuze, e.target.value ? (e.target.value as Position) : null)}
+                    >
+                      <option value="">Geen {KEUZE_NAAM[keuze]}</option>
+                      {VELD_VOLGORDE.map(pos => {
+                        const ook = fieldPlayers.filter(p => p.id !== player.id && vastePosities[p.id]?.includes(pos)).map(p => p.naam)
+                        return (
+                          <option key={pos} value={pos}>
+                            {POSITIE_LABEL[pos]}{ook.length ? ` (ook ${ook.join(', ')})` : ''}
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </label>
+                )
+              })}
             </div>
           </div>
         ))}

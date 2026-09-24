@@ -43,23 +43,57 @@
 
 .position-buttons {
   flex: 1;
+  display: flex;
+  gap: 8px;
 }
 
-.position-select {
-  width: 100%;
-  padding: 12px;
-  font-size: var(--base-readable-size);
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
+.keuze {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  background: white;
+  text-align: center;
+  cursor: pointer;
 }
 
-.position-select:focus {
-  outline: none;
-  border-color: #007AFF;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+.keuze.gekozen {
+  border-color: #1e40af;
+  background: #eff6ff;
+}
+
+.keuze-tekst {
+  font-size: var(--base-readable-size);
+  line-height: 1.15;
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}
+
+.keuze.gekozen .keuze-tekst {
+  color: #1e40af;
+  font-weight: 700;
+}
+
+/* Onzichtbare native select over de knop: telefoon toont z'n eigen keuzelijst, de tekst erboven mag wel afbreken */
+.keuze-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: var(--base-readable-size);
+  cursor: pointer;
+}
+
+.keuze:focus-within {
+  outline: 3px solid rgba(30, 64, 175, 0.4);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -76,9 +110,5 @@
 
   .player-name {
     font-size: 22px;
-  }
-
-  .position-select {
-    font-size: var(--base-readable-size);
   }
 }
