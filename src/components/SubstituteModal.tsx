@@ -79,7 +79,7 @@ export default function SubstituteModal({ playerName, position, substitutes, fie
                   <span className="modal-option-place">{POSITIE_LABEL[p.positie]}</span>
                 </button>
               ))}
-              {alleenVerplaatsen && sortedSubs.map(p => (
+              {sortedSubs.map(p => (
                 <button
                   key={p.id}
                   className={`modal-option ${selectedId === p.id ? 'selected' : ''}`}
