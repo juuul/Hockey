@@ -104,10 +104,10 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     remember()
     setSpelers(spelers.map(s => {
       if (s.id === inId) {
-        return { ...s, inVeld: true, positie: positie as Player['positie'] }
+        return { ...s, inVeld: true, positie: positie as Player['positie'], isKeeper: positie === 'K' }
       }
       if (s.id === uitId) {
-        return { ...s, inVeld: false, wisselCount: s.wisselCount + 1 }
+        return { ...s, inVeld: false, wisselCount: s.wisselCount + 1, isKeeper: false }
       }
       return s
     }))
@@ -128,8 +128,8 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     if (!a || !b) return
     remember()
     setSpelers(spelers.map(s => {
-      if (s.id === idA) return { ...s, positie: b.positie }
-      if (s.id === idB) return { ...s, positie: a.positie }
+      if (s.id === idA) return { ...s, positie: b.positie, isKeeper: b.isKeeper }
+      if (s.id === idB) return { ...s, positie: a.positie, isKeeper: a.isKeeper }
       return s
     }))
   }

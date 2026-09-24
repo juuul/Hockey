@@ -19,7 +19,8 @@ export default function Dashboard() {
   const keeper = spelers.find(s => s.isKeeper)
   const substitutes = spelers.filter(s => !s.inVeld)
 
-  const getPlayerByPosition = (pos: Position) => fieldPlayers.find(p => p.positie === pos)
+  const getPlayerByPosition = (pos: Position) =>
+    pos === 'K' ? keeper : fieldPlayers.find(p => p.positie === pos)
 
   const handlePlayerClick = (position: Position) => {
     const player = getPlayerByPosition(position)
@@ -114,10 +115,10 @@ export default function Dashboard() {
 
           {/* Keeper */}
           <div className="field-row single">
-            <div className="player-slot keeper">
+            <button className="player-slot keeper" onClick={() => handlePlayerClick('K')}>
               <div className="name">{keeper?.naam}</div>
               <div className="count" style={{ color: '#7c2d12' }}>{keeper?.wisselCount}×</div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
