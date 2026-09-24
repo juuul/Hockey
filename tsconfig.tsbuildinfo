@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/types.ts","./src/components/AddPlayerModal.tsx","./src/components/DeletePlayerModal.tsx","./src/components/ResetModal.tsx","./src/components/SubstituteModal.tsx","./src/components/Toast.tsx","./src/context/HockeyContext.tsx","./src/screens/Dashboard.tsx","./src/screens/Players.tsx","./src/screens/Positions.tsx"],"version":"5.9.3"}
