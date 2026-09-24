@@ -25,7 +25,7 @@ export default function Positions() {
   return (
     <div className="positions-screen">
       <h2>Vaste Posities Instellen</h2>
-      <p className="help-text">Na een reset staat een speler met een vaste positie altijd daar. De rest wordt willekeurig verdeeld.</p>
+      <p className="help-text">Bij een reset wordt eerst geloot wie begint. Begint een speler met een vaste positie, dan staat die daar. Bij dezelfde positie wint wie het hoogst in de spelerslijst staat.</p>
 
       <div className="positions-list">
         {fieldPlayers.map(player => (
@@ -39,10 +39,10 @@ export default function Positions() {
               >
                 <option value="">Geen vaste positie</option>
                 {POSITIONS.map(pos => {
-                  const bezetDoor = fieldPlayers.find(p => p.id !== player.id && vastePosities[p.id] === pos)
+                  const ook = fieldPlayers.filter(p => p.id !== player.id && vastePosities[p.id] === pos).map(p => p.naam)
                   return (
-                    <option key={pos} value={pos} disabled={!!bezetDoor}>
-                      {POSITIE_LABEL[pos]}{bezetDoor ? ` (${bezetDoor.naam})` : ''}
+                    <option key={pos} value={pos}>
+                      {POSITIE_LABEL[pos]}{ook.length ? ` (ook ${ook.join(', ')})` : ''}
                     </option>
                   )
                 })}

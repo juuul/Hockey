@@ -139,32 +139,38 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const resetWisselingen = () => {
     remember()
+    // Eerst eerlijk loten wie begint, pas daarna plaatsen: anders zitten spelers met een vaste positie nooit op de bank
+    const geschud = spelers.filter(s => !s.isKeeper)
+    for (let i = geschud.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[geschud[i], geschud[j]] = [geschud[j], geschud[i]]
+    }
+    // Bij dubbele vaste posities wint wie het hoogst in de spelerslijst staat
+    const basis = geschud.slice(0, VELD_VOLGORDE.length).sort((a, b) => spelers.indexOf(a) - spelers.indexOf(b))
+    const bank = geschud.slice(VELD_VOLGORDE.length)
+
     const placed = new Map<string, Player>()
     const vrij = [...VELD_VOLGORDE]
-    const veldspelers = spelers.filter(s => !s.isKeeper)
-
-    veldspelers.forEach(s => {
+    basis.forEach(s => {
       const vast = vastePosities[s.id] as Position | undefined
       if (vast && vrij.includes(vast)) {
         vrij.splice(vrij.indexOf(vast), 1)
         placed.set(s.id, { ...s, inVeld: true, positie: vast, wisselCount: 0 })
       }
     })
-
-    const rest = veldspelers.filter(s => !placed.has(s.id))
-    for (let i = rest.length - 1; i > 0; i--) {
+    for (let i = vrij.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
-      ;[rest[i], rest[j]] = [rest[j], rest[i]]
+      ;[vrij[i], vrij[j]] = [vrij[j], vrij[i]]
     }
-    rest.forEach((s, i) => {
-      placed.set(s.id, i < vrij.length
-        ? { ...s, inVeld: true, positie: vrij[i], wisselCount: 0 }
-        : { ...s, inVeld: false, wisselCount: 1 })
+    basis.filter(s => !placed.has(s.id)).forEach((s, i) => {
+      placed.set(s.id, { ...s, inVeld: true, positie: vrij[i], wisselCount: 0 })
     })
+    bank.forEach(s => placed.set(s.id, { ...s, inVeld: false, wisselCount: 1 }))
 
     setSpelers(spelers.map(s => placed.get(s.id) ?? { ...s, wisselCount: 0 }))
     setWisselingen([])
   }
+
 
 
   const setVastePosities = (spelerId: string, positie: string | null) => {
