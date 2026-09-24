@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
 import { POSITIE_LABEL, Position, VELD_VOLGORDE } from '../types'
-import Toast from '../components/Toast'
 import './Positions.css'
 
 const KEUZE_NAAM = ['1e keuze', '2e keuze']
@@ -9,13 +7,9 @@ const KEUZE_NAAM = ['1e keuze', '2e keuze']
 export default function Positions() {
   const { spelers, vastePosities, setVastePositie } = useHockey()
   const fieldPlayers = spelers.filter(s => !s.isKeeper)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
 
-  const handleSetPosition = (spelerId: string, naam: string, keuze: number, positie: Position | null) => {
+  const handleSetPosition = (spelerId: string, keuze: number, positie: Position | null) => {
     setVastePositie(spelerId, keuze, positie)
-    setToastMessage(`✓ ${naam}: ${KEUZE_NAAM[keuze]} ${positie ? POSITIE_LABEL[positie] : 'gewist'}`)
-    setShowToast(true)
   }
 
   return (
@@ -39,7 +33,7 @@ export default function Positions() {
                       className="keuze-select"
                       aria-label={`${KEUZE_NAAM[keuze]} voor ${player.naam}`}
                       value={waarde}
-                      onChange={(e) => handleSetPosition(player.id, player.naam, keuze, e.target.value ? (e.target.value as Position) : null)}
+                      onChange={(e) => handleSetPosition(player.id, keuze, e.target.value ? (e.target.value as Position) : null)}
                     >
                       <option value="">Geen {KEUZE_NAAM[keuze]}</option>
                       {VELD_VOLGORDE.map(pos => {
@@ -58,14 +52,6 @@ export default function Positions() {
           </div>
         ))}
       </div>
-
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type="success"
-          onClose={() => setShowToast(false)}
-        />
-      )}
     </div>
   )
 }

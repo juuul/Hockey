@@ -3,7 +3,6 @@ import { useHockey } from '../context/HockeyContext'
 import { Player } from '../types'
 import AddPlayerModal from '../components/AddPlayerModal'
 import DeletePlayerModal from '../components/DeletePlayerModal'
-import Toast from '../components/Toast'
 import './Players.css'
 
 export default function Players() {
@@ -11,8 +10,6 @@ export default function Players() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
 
   const fieldPlayers = spelers.filter(s => s.inVeld)
   const substitutes = spelers.filter(s => !s.inVeld)
@@ -26,8 +23,6 @@ export default function Players() {
     if (playerToDelete) {
       deleteSpeler(playerToDelete.id)
       setShowDeleteModal(false)
-      setToastMessage(`✓ ${playerToDelete.naam} verwijderd`)
-      setShowToast(true)
       setPlayerToDelete(null)
     }
   }
@@ -35,8 +30,6 @@ export default function Players() {
   const handleAddPlayer = (naam: string) => {
     addSpeler(naam)
     setShowAddModal(false)
-    setToastMessage(`✓ ${naam} toegevoegd`)
-    setShowToast(true)
   }
 
   const renderCard = (player: Player) => (
@@ -101,14 +94,6 @@ export default function Players() {
           playerName={playerToDelete.naam}
           onConfirm={confirmDelete}
           onCancel={() => setShowDeleteModal(false)}
-        />
-      )}
-
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type="success"
-          onClose={() => setShowToast(false)}
         />
       )}
     </div>
