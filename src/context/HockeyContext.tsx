@@ -145,8 +145,8 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[geschud[i], geschud[j]] = [geschud[j], geschud[i]]
     }
-    // Bij dubbele vaste posities wint wie het hoogst in de spelerslijst staat
-    const basis = geschud.slice(0, VELD_VOLGORDE.length).sort((a, b) => spelers.indexOf(a) - spelers.indexOf(b))
+    // Geschudde volgorde: bij dubbele vaste posities wint een willekeurige speler
+    const basis = geschud.slice(0, VELD_VOLGORDE.length)
     const bank = geschud.slice(VELD_VOLGORDE.length)
 
     const placed = new Map<string, Player>()

@@ -25,7 +25,7 @@ export default function Positions() {
   return (
     <div className="positions-screen">
       <h2>Vaste Posities Instellen</h2>
-      <p className="help-text">Bij een reset wordt eerst geloot wie begint. Begint een speler met een vaste positie, dan staat die daar. Bij dezelfde positie wint wie het hoogst in de spelerslijst staat.</p>
+      <p className="help-text">Bij een reset wordt eerst geloot wie begint. Begint een speler met een vaste positie, dan staat die daar. Hebben meerdere spelers dezelfde positie, dan wordt geloot wie hem krijgt.</p>
 
       <div className="positions-list">
         {fieldPlayers.map(player => (
