@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Player, Position, Wissel, VELD_VOLGORDE } from '../types'
+import { Player, Wissel } from '../types'
+import { nieuweOpstelling } from '../opstelling'
 
 interface HockeyContextType {
   spelers: Player[]
@@ -139,37 +140,10 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const resetWisselingen = () => {
     remember()
-    // Eerst eerlijk loten wie begint, pas daarna plaatsen: anders zitten spelers met een vaste positie nooit op de bank
-    const geschud = spelers.filter(s => !s.isKeeper)
-    for (let i = geschud.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[geschud[i], geschud[j]] = [geschud[j], geschud[i]]
-    }
-    // Geschudde volgorde: bij dubbele vaste posities wint een willekeurige speler
-    const basis = geschud.slice(0, VELD_VOLGORDE.length)
-    const bank = geschud.slice(VELD_VOLGORDE.length)
-
-    const placed = new Map<string, Player>()
-    const vrij = [...VELD_VOLGORDE]
-    basis.forEach(s => {
-      const vast = vastePosities[s.id] as Position | undefined
-      if (vast && vrij.includes(vast)) {
-        vrij.splice(vrij.indexOf(vast), 1)
-        placed.set(s.id, { ...s, inVeld: true, positie: vast, wisselCount: 0 })
-      }
-    })
-    for (let i = vrij.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[vrij[i], vrij[j]] = [vrij[j], vrij[i]]
-    }
-    basis.filter(s => !placed.has(s.id)).forEach((s, i) => {
-      placed.set(s.id, { ...s, inVeld: true, positie: vrij[i], wisselCount: 0 })
-    })
-    bank.forEach(s => placed.set(s.id, { ...s, inVeld: false, wisselCount: 1 }))
-
-    setSpelers(spelers.map(s => placed.get(s.id) ?? { ...s, wisselCount: 0 }))
+    setSpelers(nieuweOpstelling(spelers, vastePosities))
     setWisselingen([])
   }
+
 
 
 
