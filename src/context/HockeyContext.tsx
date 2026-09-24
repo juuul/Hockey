@@ -104,10 +104,10 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     remember()
     setSpelers(spelers.map(s => {
       if (s.id === inId) {
-        return { ...s, inVeld: true, positie: positie as Player['positie'], isKeeper: positie === 'K' }
+        return { ...s, inVeld: true, positie: positie as Player['positie'] }
       }
       if (s.id === uitId) {
-        return { ...s, inVeld: false, wisselCount: s.wisselCount + 1, isKeeper: false }
+        return { ...s, inVeld: false, wisselCount: s.wisselCount + 1 }
       }
       return s
     }))

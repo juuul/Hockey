@@ -10,16 +10,17 @@ interface Props {
   onSubstitute: (playerId: string) => void
   onMove: (playerId: string) => void
   onClose: () => void
+  alleenVerplaatsen?: boolean
 }
 
-export default function SubstituteModal({ playerName, position, substitutes, fieldPlayers, onSubstitute, onMove, onClose }: Props) {
+export default function SubstituteModal({ playerName, position, substitutes, fieldPlayers, onSubstitute, onMove, onClose, alleenVerplaatsen = false }: Props) {
   const sortedSubs = [...substitutes].sort((a, b) => a.wisselCount - b.wisselCount)
   const sortedField = [...fieldPlayers].sort(
     (a, b) => VELD_VOLGORDE.indexOf(a.positie) - VELD_VOLGORDE.indexOf(b.positie)
   )
-  const [mode, setMode] = useState<'wissel' | 'verplaats'>('wissel')
+  const [mode, setMode] = useState<'wissel' | 'verplaats'>(alleenVerplaatsen ? 'verplaats' : 'wissel')
   const [selectedId, setSelectedId] = useState<string | null>(
-    sortedSubs.length === 1 ? sortedSubs[0].id : null
+    !alleenVerplaatsen && sortedSubs.length === 1 ? sortedSubs[0].id : null
   )
 
   const switchMode = (next: 'wissel' | 'verplaats') => {
@@ -80,9 +81,11 @@ export default function SubstituteModal({ playerName, position, substitutes, fie
               ))}
             </div>
 
-            <button className="btn btn-secondary modal-mode-btn" onClick={() => switchMode('wissel')}>
-              ← Terug naar wissel
-            </button>
+            {!alleenVerplaatsen && (
+              <button className="btn btn-secondary modal-mode-btn" onClick={() => switchMode('wissel')}>
+                ← Terug naar wissel
+              </button>
+            )}
           </>
         )}
 

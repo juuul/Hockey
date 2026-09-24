@@ -151,6 +151,7 @@ export default function Dashboard() {
           onSubstitute={handleSubstitute}
           onMove={handleMove}
           onClose={() => setShowSubstituteModal(false)}
+          alleenVerplaatsen={selectedPosition === 'K'}
         />
       )}
 
