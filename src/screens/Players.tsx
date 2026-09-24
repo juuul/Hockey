@@ -3,6 +3,7 @@ import { useHockey } from '../context/HockeyContext'
 import { Player } from '../types'
 import AddPlayerModal from '../components/AddPlayerModal'
 import DeletePlayerModal from '../components/DeletePlayerModal'
+import { tel } from '../statistiek'
 import './Players.css'
 
 export default function Players() {
@@ -22,6 +23,7 @@ export default function Players() {
   const confirmDelete = () => {
     if (playerToDelete) {
       deleteSpeler(playerToDelete.id)
+      tel('speler-verwijderd')
       setShowDeleteModal(false)
       setPlayerToDelete(null)
     }
@@ -29,6 +31,7 @@ export default function Players() {
 
   const handleAddPlayer = (naam: string) => {
     addSpeler(naam)
+    tel('speler-toegevoegd')
     setShowAddModal(false)
   }
 

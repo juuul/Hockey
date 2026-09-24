@@ -3,6 +3,7 @@ import { useHockey } from '../context/HockeyContext'
 import { Position } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
+import { tel } from '../statistiek'
 import './Dashboard.css'
 
 export default function Dashboard() {
@@ -32,6 +33,7 @@ export default function Dashboard() {
     const outPlayer = getPlayerByPosition(selectedPosition)
     if (outPlayer) {
       wissel(outPlayer.id, inPlayerId, selectedPosition)
+      tel('wissel')
       setShowSubstituteModal(false)
     }
   }
@@ -40,6 +42,7 @@ export default function Dashboard() {
     const player = getPlayerByPosition(selectedPosition)
     if (player) {
       verplaats(player.id, otherPlayerId)
+      tel(selectedPosition === 'K' ? 'keeper-verplaatst' : 'verplaats')
       setShowSubstituteModal(false)
     }
   }
@@ -50,6 +53,7 @@ export default function Dashboard() {
 
   const handleConfirmReset = () => {
     resetWisselingen()
+    tel('reset')
     setShowResetModal(false)
   }
 
@@ -133,7 +137,7 @@ export default function Dashboard() {
 
       {/* Buttons */}
       <div className="button-group">
-        <button className="btn btn-secondary" onClick={undo} disabled={!canUndo}>Undo</button>
+        <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
         <button className="btn btn-secondary" onClick={handleResetSubstitutions}>Reset wissels</button>
       </div>
 

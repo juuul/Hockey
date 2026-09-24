@@ -1,5 +1,6 @@
 import { useHockey } from '../context/HockeyContext'
 import { POSITIE_LABEL, Position, VELD_VOLGORDE } from '../types'
+import { tel } from '../statistiek'
 import './Positions.css'
 
 const KEUZE_NAAM = ['1e keuze', '2e keuze']
@@ -10,6 +11,7 @@ export default function Positions() {
 
   const handleSetPosition = (spelerId: string, keuze: number, positie: Position | null) => {
     setVastePositie(spelerId, keuze, positie)
+    tel('voorkeur')
   }
 
   return (
