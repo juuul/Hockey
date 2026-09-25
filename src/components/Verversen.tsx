@@ -6,6 +6,7 @@ const DREMPEL = 90
 // Eigen "trek omlaag om te verversen": html/body scrollen niet (alleen .content), dus het browsergebaar werkt hier niet
 export default function Verversen({ scrollVak }: { scrollVak: RefObject<HTMLElement> }) {
   const [afstand, setAfstand] = useState(0)
+  const [laden, setLaden] = useState(false)
 
   useEffect(() => {
     const vak = scrollVak.current
@@ -23,10 +24,15 @@ export default function Verversen({ scrollVak }: { scrollVak: RefObject<HTMLElem
       setAfstand(huidig)
     }
     const eind = () => {
-      if (startY !== null && huidig >= DREMPEL) window.location.reload()
+      if (startY !== null && huidig >= DREMPEL) {
+        setLaden(true)
+        // Even laten zien dat er ververst wordt; de draaiende pijl loopt door tot de pagina opnieuw laadt
+        setTimeout(() => window.location.reload(), 150)
+      } else {
+        setAfstand(0)
+      }
       startY = null
       huidig = 0
-      setAfstand(0)
     }
 
     vak.addEventListener('touchstart', start, { passive: true })
@@ -41,11 +47,32 @@ export default function Verversen({ scrollVak }: { scrollVak: RefObject<HTMLElem
     }
   }, [scrollVak])
 
-  if (afstand < 10) return null
-  const klaar = afstand >= DREMPEL
+  if (!laden && afstand < 4) return null
+  const zichtbaar = laden ? DREMPEL : Math.min(afstand, DREMPEL + 20)
+  const klaar = laden || afstand >= DREMPEL
   return (
-    <div className={`verversen ${klaar ? 'klaar' : ''}`} style={{ transform: `translate(-50%, ${Math.min(afstand, DREMPEL + 30) - 20}px)` }}>
-      {klaar ? '↻ Loslaten om te verversen' : '↓ Trek verder om te verversen'}
+    <div
+      className={`verversen ${klaar ? 'klaar' : ''} ${laden ? 'laden' : ''}`}
+      style={{ transform: `translate(-50%, ${zichtbaar * 0.8}px)`, opacity: Math.min(1, zichtbaar / (DREMPEL * 0.6)) }}
+      role="status"
+      aria-label={laden ? 'Verversen' : klaar ? 'Loslaten om te verversen' : 'Trek verder om te verversen'}
+    >
+      <svg
+        className="verversen-pijl"
+        style={laden ? undefined : { transform: `rotate(${zichtbaar * 3}deg)` }}
+        viewBox="0 0 24 24"
+        width="26"
+        height="26"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+        <path d="M20 4v5h-5" />
+      </svg>
     </div>
   )
 }
