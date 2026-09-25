@@ -7,11 +7,11 @@ import { tel } from '../statistiek'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wissel, resetWisselingen, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore } = useHockey()
+  const { spelers, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
-  const [showResetModal, setShowResetModal] = useState(false)
+  const [vraag, setVraag] = useState<'wissels' | 'opstelling' | null>(null)
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
   const keeper = spelers.find(s => s.isKeeper)
@@ -47,14 +47,11 @@ export default function Dashboard() {
     }
   }
 
-  const handleResetSubstitutions = () => {
-    setShowResetModal(true)
-  }
-
-  const handleConfirmReset = () => {
-    resetWisselingen()
-    tel('reset')
-    setShowResetModal(false)
+  const bevestigVraag = () => {
+    if (vraag === 'wissels') resetWissels()
+    else nieuweOpstelling()
+    tel(vraag === 'wissels' ? 'reset' : 'nieuwe-opstelling')
+    setVraag(null)
   }
 
   const slot = (pos: Position) => {
@@ -121,7 +118,8 @@ export default function Dashboard() {
     {/* Bewust onder de vouw: alleen bereikbaar door te scrollen, zodat je er niet per ongeluk op tikt */}
     <div className="dashboard-knoppen">
       <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
-      <button className="btn btn-secondary" onClick={handleResetSubstitutions}>Reset wissels</button>
+      <button className="btn btn-secondary" onClick={() => setVraag('opstelling')}>Nieuwe opstelling</button>
+      <button className="btn btn-secondary" onClick={() => setVraag('wissels')}>Reset wissels</button>
       <button className="btn btn-secondary" onClick={() => { resetScore(); tel('score-reset') }} disabled={score.wij === 0 && score.zij === 0}>Score 0 – 0</button>
 
       {showSubstituteModal && (
@@ -138,10 +136,29 @@ export default function Dashboard() {
         />
       )}
 
-      {showResetModal && (
+      {vraag === 'wissels' && (
         <ResetModal
-          onConfirm={handleConfirmReset}
-          onCancel={() => setShowResetModal(false)}
+          titel="Wissels resetten?"
+          regels={[
+            { icoon: '↺', tekst: 'Veldspelers op 0, wisselspelers op 1' },
+            { icoon: '📍', tekst: 'Opstelling blijft staan' },
+          ]}
+          bevestig="Ja, reset wissels"
+          onConfirm={bevestigVraag}
+          onCancel={() => setVraag(null)}
+        />
+      )}
+
+      {vraag === 'opstelling' && (
+        <ResetModal
+          titel="Nieuwe opstelling?"
+          regels={[
+            { icoon: '🔀', tekst: 'Loten wie begint, daarna gelden de voorkeuren' },
+            { icoon: '🔢', tekst: 'Wissels blijven staan' },
+          ]}
+          bevestig="Ja, nieuwe opstelling"
+          onConfirm={bevestigVraag}
+          onCancel={() => setVraag(null)}
         />
       )}
     </div>

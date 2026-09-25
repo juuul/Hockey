@@ -17,7 +17,7 @@ export default function Positions() {
   return (
     <div className="positions-screen">
       <h2>Voorkeursposities</h2>
-      <p className="help-text">Bij een reset wordt eerst geloot wie begint. Wie begint, krijgt zo mogelijk de 1e keuze, anders de 2e. Hebben meerdere spelers dezelfde keuze, dan wordt geloot wie hem krijgt.</p>
+      <p className="help-text">Bij "Nieuwe opstelling" wordt eerst geloot wie begint. Wie begint, krijgt zo mogelijk de 1e keuze, anders de 2e. Hebben meerdere spelers dezelfde keuze, dan wordt geloot wie hem krijgt.</p>
 
       <div className="positions-list">
         {fieldPlayers.map(player => (

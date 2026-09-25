@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Player, Position, Wissel } from '../types'
-import { nieuweOpstelling, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling } from '../opstelling'
+import { nieuweOpstelling as lootOpstelling, resetTellers, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling } from '../opstelling'
 
 export interface Score {
   wij: number
@@ -16,7 +16,8 @@ interface HockeyContextType {
   zetMeedoen: (id: string, meedoen: boolean) => void
   plaatsIn: (id: string, positie: Position) => void
   wissel: (uitId: string, inId: string, positie: string) => void
-  resetWisselingen: () => void
+  resetWissels: () => void
+  nieuweOpstelling: () => void
   verplaats: (idA: string, idB: string) => void
   undo: () => void
   canUndo: boolean
@@ -165,10 +166,15 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     }))
   }
 
-  const resetWisselingen = () => {
+  const resetWissels = () => {
     remember()
-    setSpelers(nieuweOpstelling(spelers, vastePosities))
+    setSpelers(resetTellers(spelers))
     setWisselingen([])
+  }
+
+  const nieuweOpstelling = () => {
+    remember()
+    setSpelers(lootOpstelling(spelers, vastePosities))
   }
 
   const resetScore = () => {
@@ -196,7 +202,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore }}>
       {children}
     </HockeyContext.Provider>
   )

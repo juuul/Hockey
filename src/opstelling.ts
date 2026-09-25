@@ -23,17 +23,22 @@ export function nieuweOpstelling(spelers: Player[], vastePosities: Record<string
       const wens = vastePosities[s.id]?.[keuze] as Position | undefined
       if (wens && vrij.includes(wens)) {
         vrij.splice(vrij.indexOf(wens), 1)
-        placed.set(s.id, { ...s, inVeld: true, positie: wens, wisselCount: 0 })
+        placed.set(s.id, { ...s, inVeld: true, positie: wens })
       }
     })
   }
   const vrijGeschud = schud(vrij)
   basis.filter(s => !placed.has(s.id)).forEach((s, i) => {
-    placed.set(s.id, { ...s, inVeld: true, positie: vrijGeschud[i], wisselCount: 0 })
+    placed.set(s.id, { ...s, inVeld: true, positie: vrijGeschud[i] })
   })
-  bank.forEach(s => placed.set(s.id, { ...s, inVeld: false, wisselCount: 1 }))
+  bank.forEach(s => placed.set(s.id, { ...s, inVeld: false }))
 
-  return spelers.map(s => placed.get(s.id) ?? (s.meedoen ? { ...s, wisselCount: 0 } : { ...s, inVeld: false, wisselCount: 0 }))
+  return spelers.map(s => placed.get(s.id) ?? (s.meedoen ? s : { ...s, inVeld: false }))
+}
+
+// Wie op de bank zit, staat al één keer 'uit' en begint daarom op 1
+export function resetTellers(spelers: Player[]): Player[] {
+  return spelers.map(s => ({ ...s, wisselCount: s.meedoen && !s.inVeld ? 1 : 0 }))
 }
 
 // Een vrijgekomen veldplek wordt gevuld door de meedoende wisselspeler met de minste wissels; het doel blijft leeg (keeper kies je bewust)
