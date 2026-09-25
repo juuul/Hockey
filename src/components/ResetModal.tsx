@@ -20,10 +20,6 @@ export default function ResetModal({ onConfirm, onCancel }: ResetModalProps) {
             <span className="info-icon">🔀</span>
             <span className="info-text">Basis wordt geloot, vaste posities blijven staan</span>
           </div>
-          <div className="info-item">
-            <span className="info-icon">⚽</span>
-            <span className="info-text">Score wordt 0 – 0</span>
-          </div>
         </div>
 
         <div className="reset-buttons">

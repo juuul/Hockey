@@ -4,9 +4,23 @@
   padding: 6px;
   gap: 6px;
   width: 100%;
-  height: 100%;
+  flex: 0 0 100%;
   min-height: 0;
   overflow: hidden;
+}
+
+.dashboard-knoppen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 6px 16px;
+  flex: 0 0 auto;
+  border-top: 2px solid #e5e7eb;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .score-regel {
@@ -232,12 +246,6 @@
   color: #dc2626;
   margin-left: 12px;
   flex-shrink: 0;
-}
-
-.button-group {
-  display: flex;
-  gap: 8px;
-  flex: 0 0 auto;
 }
 
 .btn {

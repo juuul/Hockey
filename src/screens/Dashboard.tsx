@@ -7,7 +7,7 @@ import { tel } from '../statistiek'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wissel, resetWisselingen, verplaats, plaatsIn, undo, canUndo, score, scoor } = useHockey()
+  const { spelers, wissel, resetWisselingen, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
@@ -79,6 +79,7 @@ export default function Dashboard() {
   }
 
   return (
+    <>
     <div className="dashboard">
       <div className="score-regel">
         <button className="score-min" onClick={() => { scoor('wij', -1); tel('score-wij-min') }} disabled={score.wij === 0} aria-label="Doelpunt wij eraf">−</button>
@@ -115,11 +116,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="button-group">
-        <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
-        <button className="btn btn-secondary" onClick={handleResetSubstitutions}>Reset wissels</button>
-      </div>
+    </div>
+
+    {/* Bewust onder de vouw: alleen bereikbaar door te scrollen, zodat je er niet per ongeluk op tikt */}
+    <div className="dashboard-knoppen">
+      <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
+      <button className="btn btn-secondary" onClick={handleResetSubstitutions}>Reset wissels</button>
+      <button className="btn btn-secondary" onClick={() => { resetScore(); tel('score-reset') }} disabled={score.wij === 0 && score.zij === 0}>Score 0 – 0</button>
 
       {showSubstituteModal && (
         <SubstituteModal
@@ -142,5 +145,6 @@ export default function Dashboard() {
         />
       )}
     </div>
+    </>
   )
 }

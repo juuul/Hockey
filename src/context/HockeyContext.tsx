@@ -22,6 +22,7 @@ interface HockeyContextType {
   canUndo: boolean
   score: Score
   scoor: (team: keyof Score, verschil: 1 | -1) => void
+  resetScore: () => void
   setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
 }
 
@@ -168,6 +169,10 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     remember()
     setSpelers(nieuweOpstelling(spelers, vastePosities))
     setWisselingen([])
+  }
+
+  const resetScore = () => {
+    remember()
     setScore({ wij: 0, zij: 0 })
   }
 
@@ -191,7 +196,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore }}>
       {children}
     </HockeyContext.Provider>
   )
