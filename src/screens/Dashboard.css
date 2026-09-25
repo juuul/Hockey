@@ -9,6 +9,15 @@
   overflow: hidden;
 }
 
+.wissels-eronder {
+  flex: 0 0 auto;
+  margin: 0 6px;
+  padding: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
 .dashboard-knoppen {
   display: flex;
   flex-direction: column;
@@ -199,9 +208,6 @@
   padding: 8px;
   border: 1px solid #e5e7eb;
   flex: 0 0 auto;
-  max-height: 25dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .section-title {
@@ -215,7 +221,7 @@
 
 .substitutes-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 

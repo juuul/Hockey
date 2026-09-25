@@ -4,10 +4,11 @@ import { Position, POSITIE_LABEL } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
 import { tel } from '../statistiek'
+import { sorteerWissels } from '../opstelling'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore } = useHockey()
+  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
@@ -15,7 +16,16 @@ export default function Dashboard() {
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
   const keeper = spelers.find(s => s.isKeeper)
-  const substitutes = spelers.filter(s => !s.inVeld && s.meedoen)
+  const substitutes = sorteerWissels(spelers.filter(s => !s.inVeld && s.meedoen), wisselingen)
+  // Eén regel wissels past in beeld; de rest staat onder de vouw, bereikbaar door de pagina te scrollen
+  const wisselsInBeeld = substitutes.slice(0, 2)
+  const wisselsEronder = substitutes.slice(2)
+  const wisselTegel = (sub: typeof substitutes[number]) => (
+    <div key={sub.id} className="substitute-item">
+      <span className="name">{sub.naam}</span>
+      <span className="count">{sub.wisselCount}×</span>
+    </div>
+  )
 
   const getPlayerByPosition = (pos: Position) =>
     pos === 'K' ? keeper : fieldPlayers.find(p => p.positie === pos)
@@ -103,19 +113,16 @@ export default function Dashboard() {
       {/* Wisselspelers */}
       <div className="substitutes-section">
         <div className="section-title">Wissels</div>
-        <div className="substitutes-list">
-          {substitutes.map(sub => (
-            <div key={sub.id} className="substitute-item">
-              <span className="name">{sub.naam}</span>
-              <span className="count">{sub.wisselCount}×</span>
-            </div>
-          ))}
-        </div>
+        <div className="substitutes-list">{wisselsInBeeld.map(wisselTegel)}</div>
       </div>
 
     </div>
 
     {/* Bewust onder de vouw: alleen bereikbaar door te scrollen, zodat je er niet per ongeluk op tikt */}
+    {wisselsEronder.length > 0 && (
+      <div className="substitutes-list wissels-eronder">{wisselsEronder.map(wisselTegel)}</div>
+    )}
+
     <div className="dashboard-knoppen">
       <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
       <button className="btn btn-secondary" onClick={() => setVraag('opstelling')}>Nieuwe opstelling</button>

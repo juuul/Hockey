@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function SubstituteModal({ playerName, position, substitutes, fieldPlayers, onSubstitute, onMove, onClose, alleenVerplaatsen = false, leegPlek = false }: Props) {
-  const sortedSubs = [...substitutes].sort((a, b) => a.wisselCount - b.wisselCount)
+  const sortedSubs = substitutes
   const sortedField = [...fieldPlayers].sort(
     (a, b) => VELD_VOLGORDE.indexOf(a.positie) - VELD_VOLGORDE.indexOf(b.positie)
   )

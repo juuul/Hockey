@@ -1,4 +1,4 @@
-import { Player, Position, VELD_VOLGORDE } from './types'
+import { Player, Position, VELD_VOLGORDE, Wissel } from './types'
 
 function schud<T>(lijst: T[]): T[] {
   const kopie = [...lijst]
@@ -65,4 +65,10 @@ export function zetMeedoen(spelers: Player[], id: string, meedoen: boolean): Pla
 export function plaatsIn(spelers: Player[], id: string, positie: Position): Player[] {
   const basis = positie === 'K' ? haalUitVeld(spelers, id) : spelers
   return basis.map(s => s.id === id ? { ...s, inVeld: true, positie, isKeeper: positie === 'K' } : s)
+}
+
+// Minste wissels eerst; bij gelijke stand komt wie het laatst uit het veld ging onderaan
+export function sorteerWissels(wissels: Player[], wisselingen: Wissel[]): Player[] {
+  const laatstUit = (id: string) => wisselingen.map(w => w.uitSpeler).lastIndexOf(id)
+  return [...wissels].sort((a, b) => a.wisselCount - b.wisselCount || laatstUit(a.id) - laatstUit(b.id))
 }
