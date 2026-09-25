@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { HockeyProvider } from './context/HockeyContext'
 import Dashboard from './screens/Dashboard'
 import Players from './screens/Players'
 import Positions from './screens/Positions'
+import Verversen from './components/Verversen'
 import './App.css'
 
 function AppContent() {
   const [screen, setScreen] = useState<'dashboard' | 'players' | 'positions'>('dashboard')
+  const scrollVak = useRef<HTMLDivElement>(null)
 
   return (
     <div className="mobile-frame">
@@ -31,11 +33,12 @@ function AppContent() {
         </button>
       </nav>
 
-      <div className="content">
+      <div className="content" ref={scrollVak}>
         {screen === 'dashboard' && <Dashboard />}
         {screen === 'players' && <Players />}
         {screen === 'positions' && <Positions />}
       </div>
+      <Verversen scrollVak={scrollVak} />
     </div>
   )
 }
