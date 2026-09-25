@@ -9,6 +9,70 @@
   overflow: hidden;
 }
 
+.score-regel {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.score-min,
+.score-team {
+  min-height: 60px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.score-min:active,
+.score-team:active {
+  transform: scale(0.96);
+}
+
+.score-min {
+  flex: 0 0 60px;
+  border: 2px solid #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  font-size: calc(var(--base-readable-size) * 1.3);
+}
+
+.score-min:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.score-team {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 0 10px;
+  border: none;
+  color: white;
+}
+
+.score-team.wij {
+  background: #1e40af;
+}
+
+.score-team.zij {
+  background: #b91c1c;
+}
+
+.score-naam {
+  font-size: var(--base-readable-size);
+}
+
+.score-getal {
+  font-size: calc(var(--base-readable-size) * 1.6);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
 .field-container {
   background: linear-gradient(to bottom, #2d5016, #3d6b1f);
   border-radius: 8px;

@@ -7,7 +7,7 @@ import { tel } from '../statistiek'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wissel, resetWisselingen, verplaats, plaatsIn, undo, canUndo } = useHockey()
+  const { spelers, wissel, resetWisselingen, verplaats, plaatsIn, undo, canUndo, score, scoor } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
@@ -80,6 +80,19 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
+      <div className="score-regel">
+        <button className="score-min" onClick={() => { scoor('wij', -1); tel('score-wij-min') }} disabled={score.wij === 0} aria-label="Doelpunt wij eraf">−</button>
+        <button className="score-team wij" onClick={() => { scoor('wij', 1); tel('score-wij') }} aria-label={`Wij ${score.wij}, doelpunt erbij`}>
+          <span className="score-naam">Wij</span>
+          <span className="score-getal">{score.wij}</span>
+        </button>
+        <button className="score-team zij" onClick={() => { scoor('zij', 1); tel('score-zij') }} aria-label={`Zij ${score.zij}, doelpunt erbij`}>
+          <span className="score-getal">{score.zij}</span>
+          <span className="score-naam">Zij</span>
+        </button>
+        <button className="score-min" onClick={() => { scoor('zij', -1); tel('score-zij-min') }} disabled={score.zij === 0} aria-label="Doelpunt zij eraf">−</button>
+      </div>
+
       <div className="field-container">
         <div className="field">
           <div className="field-row">{(['LW', 'RW'] as Position[]).map(slot)}</div>

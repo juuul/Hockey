@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Player, Position, Wissel } from '../types'
 import { nieuweOpstelling, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling } from '../opstelling'
 
+export interface Score {
+  wij: number
+  zij: number
+}
+
 interface HockeyContextType {
   spelers: Player[]
   wisselingen: Wissel[]
@@ -15,6 +20,8 @@ interface HockeyContextType {
   verplaats: (idA: string, idB: string) => void
   undo: () => void
   canUndo: boolean
+  score: Score
+  scoor: (team: keyof Score, verschil: 1 | -1) => void
   setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
 }
 
@@ -56,10 +63,15 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     return Object.fromEntries(Object.entries(parsed).map(([id, v]) => [id, typeof v === 'string' ? [v, ''] : v]))
   })
 
-  const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[] }[]>([])
+  const [score, setScore] = useState<Score>(() => {
+    const saved = localStorage.getItem(`${OPSLAG}_score`)
+    return saved ? JSON.parse(saved) : { wij: 0, zij: 0 }
+  })
+
+  const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score }[]>([])
 
   const remember = () => {
-    setHistory(h => [...h, { spelers, wisselingen }])
+    setHistory(h => [...h, { spelers, wisselingen, score }])
   }
 
   const undo = () => {
@@ -67,6 +79,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     if (!last) return
     setSpelers(last.spelers)
     setWisselingen(last.wisselingen)
+    setScore(last.score)
     setHistory(history.slice(0, -1))
   }
 
@@ -77,6 +90,10 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem(`${OPSLAG}_wisselingen`, JSON.stringify(wisselingen))
   }, [wisselingen])
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_score`, JSON.stringify(score))
+  }, [score])
 
   useEffect(() => {
     localStorage.setItem(`${OPSLAG}_vaste_posities`, JSON.stringify(vastePosities))
@@ -151,6 +168,13 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     remember()
     setSpelers(nieuweOpstelling(spelers, vastePosities))
     setWisselingen([])
+    setScore({ wij: 0, zij: 0 })
+  }
+
+  const scoor = (team: keyof Score, verschil: 1 | -1) => {
+    if (score[team] + verschil < 0) return
+    remember()
+    setScore({ ...score, [team]: score[team] + verschil })
   }
 
 
@@ -167,7 +191,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor }}>
       {children}
     </HockeyContext.Provider>
   )
