@@ -5,6 +5,7 @@ export interface Player {
   naam: string;
   positie: Position;
   inVeld: boolean;
+  meedoen: boolean;
   wisselCount: number;
   isKeeper: boolean;
 }

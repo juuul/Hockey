@@ -11,16 +11,17 @@ interface Props {
   onMove: (playerId: string) => void
   onClose: () => void
   alleenVerplaatsen?: boolean
+  leegPlek?: boolean
 }
 
-export default function SubstituteModal({ playerName, position, substitutes, fieldPlayers, onSubstitute, onMove, onClose, alleenVerplaatsen = false }: Props) {
+export default function SubstituteModal({ playerName, position, substitutes, fieldPlayers, onSubstitute, onMove, onClose, alleenVerplaatsen = false, leegPlek = false }: Props) {
   const sortedSubs = [...substitutes].sort((a, b) => a.wisselCount - b.wisselCount)
   const sortedField = [...fieldPlayers].sort(
     (a, b) => VELD_VOLGORDE.indexOf(a.positie) - VELD_VOLGORDE.indexOf(b.positie)
   )
-  const [mode, setMode] = useState<'wissel' | 'verplaats'>(alleenVerplaatsen ? 'verplaats' : 'wissel')
+  const [mode, setMode] = useState<'wissel' | 'verplaats'>(alleenVerplaatsen && !leegPlek ? 'verplaats' : 'wissel')
   const [selectedId, setSelectedId] = useState<string | null>(
-    !alleenVerplaatsen && sortedSubs.length === 1 ? sortedSubs[0].id : null
+    (leegPlek || !alleenVerplaatsen) && sortedSubs.length === 1 ? sortedSubs[0].id : null
   )
 
   const switchMode = (next: 'wissel' | 'verplaats') => {
@@ -30,14 +31,44 @@ export default function SubstituteModal({ playerName, position, substitutes, fie
 
   const confirm = () => {
     if (!selectedId) return
-    if (mode === 'wissel') onSubstitute(selectedId)
+    if (leegPlek || mode === 'wissel') onSubstitute(selectedId)
     else onMove(selectedId)
   }
 
   return (
     <div className="modal show" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        {mode === 'wissel' ? (
+        {leegPlek ? (
+          <>
+            <div className="modal-title">Wie komt op {POSITIE_LABEL[position]}?</div>
+            {sortedSubs.length === 0 && position !== 'K' ? (
+              <div className="modal-empty">Geen wisselspelers beschikbaar</div>
+            ) : (
+              <div className="modal-options">
+                {sortedSubs.map(p => (
+                  <button
+                    key={p.id}
+                    className={`modal-option ${selectedId === p.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedId(p.id)}
+                  >
+                    <span className="modal-option-name">{p.naam}</span>
+                    <span className="modal-option-count">{p.wisselCount}×</span>
+                  </button>
+                ))}
+                {position === 'K' && sortedField.map(p => (
+                  <button
+                    key={p.id}
+                    className={`modal-option ${selectedId === p.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedId(p.id)}
+                  >
+                    <span className="modal-option-name">{p.naam}</span>
+                    <span className="modal-option-place">{POSITIE_LABEL[p.positie]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : mode === 'wissel' ? (
           <>
             <div className="modal-title">Wissel {playerName}</div>
             <div className="modal-subtitle">Wie komt erin?</div>

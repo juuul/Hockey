@@ -27,7 +27,7 @@ function AppContent() {
           className={`tab-btn ${screen === 'positions' ? 'active' : ''}`}
           onClick={() => setScreen('positions')}
         >
-          Posities
+          Voorkeur
         </button>
       </nav>
 

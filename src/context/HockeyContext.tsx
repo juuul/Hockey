@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Player, Wissel } from '../types'
-import { nieuweOpstelling } from '../opstelling'
+import { Player, Position, Wissel } from '../types'
+import { nieuweOpstelling, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling } from '../opstelling'
 
 interface HockeyContextType {
   spelers: Player[]
@@ -8,7 +8,8 @@ interface HockeyContextType {
   vastePosities: Record<string, string[]>
   addSpeler: (naam: string) => void
   deleteSpeler: (id: string) => void
-  toggleSpeler: (id: string) => void
+  zetMeedoen: (id: string, meedoen: boolean) => void
+  plaatsIn: (id: string, positie: Position) => void
   wissel: (uitId: string, inId: string, positie: string) => void
   resetWisselingen: () => void
   verplaats: (idA: string, idB: string) => void
@@ -23,23 +24,24 @@ const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 
 const INITIAL_PLAYERS: Player[] = [
-  { id: '1', naam: 'Lizzy', positie: 'LW', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '2', naam: 'Fee', positie: 'RW', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '3', naam: 'Sarah', positie: 'LM', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '4', naam: 'Isa', positie: 'CM', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '5', naam: 'Evi', positie: 'RM', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '6', naam: 'Aster', positie: 'LBM', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '7', naam: 'Floor', positie: 'CBM', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '8', naam: 'Carice', positie: 'RBM', inVeld: true, wisselCount: 0, isKeeper: false },
-  { id: '9', naam: 'Julia', positie: 'K', inVeld: true, wisselCount: 0, isKeeper: true },
-  { id: '10', naam: 'Sara', positie: 'LW', inVeld: false, wisselCount: 0, isKeeper: false },
-  { id: '11', naam: 'Benthe', positie: 'RW', inVeld: false, wisselCount: 0, isKeeper: false },
+  { id: '1', naam: 'Lizzy', positie: 'LW', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '2', naam: 'Fee', positie: 'RW', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '3', naam: 'Sarah', positie: 'LM', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '4', naam: 'Isa', positie: 'CM', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '5', naam: 'Evi', positie: 'RM', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '6', naam: 'Aster', positie: 'LBM', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '7', naam: 'Floor', positie: 'CBM', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '8', naam: 'Carice', positie: 'RBM', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '9', naam: 'Julia', positie: 'K', inVeld: true, meedoen: true, wisselCount: 0, isKeeper: true },
+  { id: '10', naam: 'Sara', positie: 'LW', inVeld: false, meedoen: true, wisselCount: 0, isKeeper: false },
+  { id: '11', naam: 'Benthe', positie: 'RW', inVeld: false, meedoen: true, wisselCount: 0, isKeeper: false },
 ]
 
 export function HockeyProvider({ children }: { children: React.ReactNode }) {
   const [spelers, setSpelers] = useState<Player[]>(() => {
     const saved = localStorage.getItem(`${OPSLAG}_spelers`)
-    return saved ? JSON.parse(saved) : INITIAL_PLAYERS
+    // Oudere versies kenden 'meedoen' nog niet
+    return saved ? JSON.parse(saved).map((sp: Player) => ({ ...sp, meedoen: sp.meedoen ?? true })) : INITIAL_PLAYERS
   })
 
   const [wisselingen, setWisselingen] = useState<Wissel[]>(() => {
@@ -88,6 +90,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
       naam,
       positie: 'LW',
       inVeld: false,
+      meedoen: true,
       wisselCount: 0,
       isKeeper: false,
     }
@@ -96,15 +99,19 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const deleteSpeler = (id: string) => {
     remember()
-    setSpelers(spelers.filter(s => s.id !== id))
+    setSpelers(haalUitVeld(spelers, id).filter(s => s.id !== id))
   }
 
-  const toggleSpeler = (id: string) => {
+  const zetMeedoen = (id: string, meedoen: boolean) => {
     remember()
-    setSpelers(spelers.map(s =>
-      s.id === id ? { ...s, inVeld: !s.inVeld } : s
-    ))
+    setSpelers(zetMeedoenIn(spelers, id, meedoen))
   }
+
+  const plaatsIn = (id: string, positie: Position) => {
+    remember()
+    setSpelers(plaatsInOpstelling(spelers, id, positie))
+  }
+
 
   const wissel = (uitId: string, inId: string, positie: string) => {
     remember()
@@ -160,7 +167,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, toggleSpeler, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWisselingen, verplaats, undo, canUndo: history.length > 0, setVastePositie }}>
       {children}
     </HockeyContext.Provider>
   )

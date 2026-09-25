@@ -14,7 +14,7 @@
   border-radius: 8px;
   padding: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  flex: 1 1 50%;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -104,13 +104,24 @@
   color: #7c2d12;
 }
 
+.player-slot.keeper .count {
+  color: #7c2d12;
+}
+
+.player-slot.leeg {
+  background: rgba(255, 255, 255, 0.25);
+  border: 3px dashed white;
+  color: white;
+  box-shadow: none;
+}
+
 .substitutes-section {
   background: #f9fafb;
   border-radius: 8px;
   padding: 8px;
   border: 1px solid #e5e7eb;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  max-height: 25dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

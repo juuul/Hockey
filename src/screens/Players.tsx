@@ -7,13 +7,12 @@ import { tel } from '../statistiek'
 import './Players.css'
 
 export default function Players() {
-  const { spelers, addSpeler, deleteSpeler, toggleSpeler } = useHockey()
+  const { spelers, addSpeler, deleteSpeler, zetMeedoen } = useHockey()
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
 
-  const fieldPlayers = spelers.filter(s => s.inVeld)
-  const substitutes = spelers.filter(s => !s.inVeld)
+  const aantalMee = spelers.filter(s => s.meedoen).length
 
   const handleDelete = (id: string, naam: string) => {
     setPlayerToDelete({ id, naam })
@@ -35,53 +34,53 @@ export default function Players() {
     setShowAddModal(false)
   }
 
-  const renderCard = (player: Player) => (
-    <div key={player.id} className={`player-card ${player.inVeld ? 'player-card--field' : 'player-card--sub'}`}>
-      <div className="player-name">{player.naam}</div>
-      <span className="player-count">{player.wisselCount}×</span>
-      <button
-        className={`player-toggle ${player.inVeld ? 'on' : ''}`}
-        onClick={() => toggleSpeler(player.id)}
-        aria-label={player.inVeld ? 'Naar wissels' : 'Naar veld'}
-      />
-      <button
-        className="delete-btn"
-        onClick={() => handleDelete(player.id, player.naam)}
-        aria-label={`${player.naam} verwijderen`}
-      >
-        ✕
-      </button>
-    </div>
-  )
+  const schakel = (player: Player) => {
+    zetMeedoen(player.id, !player.meedoen)
+    tel(player.meedoen ? 'afgemeld' : 'aangemeld')
+  }
 
   return (
     <div className="players-screen">
       <div className="section-header">
-        <div className="section-title">Opstelling</div>
+        <div className="section-title">Wie doet mee?</div>
         <button className="btn-icon" onClick={() => setShowAddModal(true)}>+ Speler</button>
       </div>
+      <p className="players-uitleg">Tik op een speler om aan of af te melden. Wie niet meedoet, komt niet in de opstelling en niet bij de wissels.</p>
 
       <div className="players-list">
-        {fieldPlayers.map(renderCard)}
-      </div>
-
-      {substitutes.length > 0 && (
-        <>
-          <div className="section-title">Wisselspelers</div>
-          <div className="players-list">
-            {substitutes.map(renderCard)}
+        {spelers.map(player => (
+          <div key={player.id} className={`player-card ${player.meedoen ? 'doet-mee' : 'doet-niet-mee'}`}>
+            <button
+              className="meedoen-knop"
+              role="switch"
+              aria-checked={player.meedoen}
+              onClick={() => schakel(player)}
+            >
+              <span className="player-info">
+                <span className="player-name">{player.naam}</span>
+                <span className="player-status">{player.meedoen ? 'Doet mee' : 'Doet niet mee'}</span>
+              </span>
+              <span className={`player-toggle ${player.meedoen ? 'on' : ''}`} aria-hidden="true" />
+            </button>
+            <button
+              className="delete-btn"
+              onClick={() => handleDelete(player.id, player.naam)}
+              aria-label={`${player.naam} verwijderen`}
+            >
+              ✕
+            </button>
           </div>
-        </>
-      )}
+        ))}
+      </div>
 
       <div className="stats-row">
         <div className="stat">
-          <div className="stat-value">{fieldPlayers.filter(p => !p.isKeeper).length + (spelers.find(p => p.isKeeper && p.inVeld) ? 1 : 0)}</div>
-          <div className="stat-label">Op Veld</div>
+          <div className="stat-value">{aantalMee}</div>
+          <div className="stat-label">Doen mee</div>
         </div>
         <div className="stat">
-          <div className="stat-value">{substitutes.length}</div>
-          <div className="stat-label">Wissel</div>
+          <div className="stat-value">{spelers.length - aantalMee}</div>
+          <div className="stat-label">Doen niet mee</div>
         </div>
       </div>
 
