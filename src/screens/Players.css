@@ -110,6 +110,20 @@
   flex-direction: column;
 }
 
+.player-naamregel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.player-goals {
+  flex-shrink: 0;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  color: #1f2937;
+}
+
 .player-name {
   font-weight: 700;
   font-size: var(--base-readable-size);

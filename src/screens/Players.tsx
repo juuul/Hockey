@@ -7,7 +7,7 @@ import { tel } from '../statistiek'
 import './Players.css'
 
 export default function Players() {
-  const { spelers, addSpeler, deleteSpeler, zetMeedoen } = useHockey()
+  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten } = useHockey()
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
@@ -57,7 +57,14 @@ export default function Players() {
               onClick={() => schakel(player)}
             >
               <span className="player-info">
-                <span className="player-name">{player.naam}</span>
+                <span className="player-naamregel">
+                  <span className="player-name">{player.naam}</span>
+                  {doelpunten.includes(player.id) && (
+                    <span className="player-goals" aria-label={`${doelpunten.filter(d => d === player.id).length} doelpunten`}>
+                      ⚽ {doelpunten.filter(d => d === player.id).length}
+                    </span>
+                  )}
+                </span>
                 <span className="player-status">{player.meedoen ? 'Doet mee' : 'Doet niet mee'}</span>
               </span>
               <span className={`player-toggle ${player.meedoen ? 'on' : ''}`} aria-hidden="true" />
