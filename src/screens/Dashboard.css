@@ -164,24 +164,20 @@
   z-index: 1;
 }
 
-/* Ovalen: breder dan hoog zodat namen passen; in rijen met 1-2 spelers mogen ze breder */
-.field-row.rij-1 .player-slot,
-.field-row.rij-2 .player-slot,
-.field-row.single .player-slot {
-  --b: min(40cqw, 230px);
+.field-row.rij-2 {
+  padding: 0 10%;
 }
 
 .player-slot {
-  --b: min(31cqw, 190px);
-  --h: min(22cqh, calc(var(--b) * 0.62));
+  --size: min(31cqw, 24cqh, 170px);
   background: white;
   border: none;
   border-radius: 50%;
   width: auto;
-  min-width: var(--b);
+  min-width: var(--size);
   height: auto;
-  min-height: var(--h);
-  padding: 4px 10px;
+  min-height: var(--size);
+  padding: 4px 14px;
   white-space: nowrap;
   display: flex;
   flex-direction: column;
@@ -202,14 +198,14 @@
 }
 
 .player-slot .name {
-  font-size: max(calc(var(--h) * 0.34), var(--base-readable-size));
+  font-size: max(calc(var(--size) * 0.23), var(--base-readable-size));
   font-weight: 700;
   line-height: 1.05;
 }
 
 .player-slot .count {
   line-height: 1.05;
-  font-size: max(calc(var(--h) * 0.3), var(--base-readable-size));
+  font-size: max(calc(var(--size) * 0.21), var(--base-readable-size));
   color: #dc2626;
   font-weight: 700;
   margin-top: 2px;
