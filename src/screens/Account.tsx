@@ -117,10 +117,12 @@ function Inloggen({ email: startEmail = '', aanmelden }: { email?: string; aanme
       <button className="btn btn-primary" type="submit" disabled={bezig || !email.trim() || !wachtwoord}>Inloggen</button>
       <button className="btn btn-secondary" type="button" onClick={vergeten} disabled={bezig}>Wachtwoord vergeten</button>
       {aanmelden && (
-        <>
-          <p className="account-uitleg">Nog geen team in de app?</p>
-          <button className="btn btn-secondary" type="button" onClick={aanmelden}>Nieuw team aanmelden</button>
-        </>
+        <div className="account-kaart">
+          <h2 className="account-kaart-titel">Nog geen account?</h2>
+          <p className="account-uitleg"><strong>Zit je team al in de app?</strong> Vraag een beheerder van je team om een uitnodiging. Die komt per mail.</p>
+          <p className="account-uitleg"><strong>Wil je de app voor je eigen team gebruiken?</strong> Meld je team aan. Na goedkeuring krijg je een mail om je account te maken, en word je beheerder van het team.</p>
+          <button className="btn btn-primary" type="button" onClick={aanmelden}>Mijn team aanmelden</button>
+        </div>
       )}
     </form>
   )

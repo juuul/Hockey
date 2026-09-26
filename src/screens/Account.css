@@ -350,3 +350,20 @@ button.account-regel:disabled {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.account-kaart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px 12px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.account-kaart-titel {
+  font-size: calc(var(--base-readable-size) * 1.1);
+  font-weight: 700;
+  color: #1f2937;
+}
