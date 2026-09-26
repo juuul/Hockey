@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hockey App - Substitutie Manager</title>
+    <script>
+      // Na een nieuwe publicatie bestaan de oude JS/CSS-bestanden niet meer. Staat deze pagina nog in de cache,
+      // dan blijft het scherm leeg: dan één keer opnieuw laden met een nieuw adres (buiten de cache om)
+      window.addEventListener('error', function (e) {
+        var t = e.target
+        if (!t || !(t.tagName === 'SCRIPT' || (t.tagName === 'LINK' && t.rel === 'stylesheet'))) return
+        try {
+          if (sessionStorage.getItem('hockey_herladen')) return
+          sessionStorage.setItem('hockey_herladen', '1')
+        } catch (_) {}
+        location.replace(location.pathname + '?v=' + Date.now() + location.hash)
+      }, true)
+    </script>
   </head>
   <body>
     <div id="root"></div>

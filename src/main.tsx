@@ -6,6 +6,14 @@ import { startStatistiek } from './statistiek'
 
 startStatistiek()
 
+// Geladen: de herlaad-beveiliging uit index.html mag weer, en het ?v=… uit het adres weg
+try {
+  sessionStorage.removeItem('hockey_herladen')
+} catch {
+  // geen opslag: niets aan de hand
+}
+if (window.location.search.includes('v=')) history.replaceState(null, '', window.location.pathname + window.location.hash)
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
