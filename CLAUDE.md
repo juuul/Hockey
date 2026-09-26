@@ -98,7 +98,9 @@ Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein,
 - Mail via Gmail SMTP met een app-wachtwoord; ingesteld in het beheerscherm, niet in git.
 - **De repo is openbaar**: geen e-mailadressen, wachtwoorden, tokens of andere persoonlijke gegevens committen.
 - **Rechten worden op de server afgedwongen** (collection rules). In PocketBase 0.40: relaties vergelijken met `veld.id ?= …` (niet `veld ?= …`), en elke regel begint met `@request.auth.id != ""` (anders telt een lege relatie als match voor bezoekers).
-- Wijzigingen aan migraties/hooks eerst testen op een losse container met eigen datamap in de scratchpad (poort 8099, nep-SMTP), nooit op de echte data. De echte container herstarten (`docker restart hockey-pocketbase`) doet de gebruiker.
+- Migraties en hooks zitten **in het image** (niet gemount): de echte server verandert pas na `cd server && docker compose up -d --build`, en dat doet de gebruiker. (Eerder waren ze gemount; PocketBase herlaadde toen vanzelf en voerde een halve migratie uit.)
+- Een migratie die al op de server gedraaid heeft **nooit aanpassen**: altijd een nieuwe migratie toevoegen.
+- Wijzigingen eerst testen op een losse container met eigen datamap in de scratchpad (poort 8099, nep-SMTP, migraties/hooks daar wél gemount), nooit op de echte data. Voor problemen met echte data: een kopie maken met sqlite `backup()` (alleen-lezen bron) en daarop testen.
 - Test en live gebruiken voorlopig dezelfde server; `appURL` staat op de test-URL.
 
 ## Deploy

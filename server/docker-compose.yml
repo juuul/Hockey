@@ -1,4 +1,5 @@
-# Hockey-server (PocketBase). Alleen op 127.0.0.1: van buitenaf bereikbaar via Tailscale Funnel
+# Hockey-server (PocketBase). Alleen op 127.0.0.1: van buitenaf bereikbaar via Tailscale Funnel.
+# Bijwerken (nieuwe migraties/hooks): docker compose up -d --build
 services:
   pocketbase:
     build: .
@@ -8,8 +9,6 @@ services:
       - "127.0.0.1:8090:8090"
     volumes:
       - ./pb_data:/pb/pb_data
-      - ./pb_migrations:/pb/pb_migrations:ro
-      - ./pb_hooks:/pb/pb_hooks:ro
     read_only: true
     tmpfs:
       - /tmp
