@@ -22,7 +22,8 @@ interface HockeyContextType {
   undo: () => void
   canUndo: boolean
   score: Score
-  scoor: (team: keyof Score, verschil: 1 | -1) => void
+  scoor: (team: keyof Score, verschil: 1 | -1, scorerId?: string | null) => void
+  doelpunten: (string | null)[]
   resetScore: () => void
   setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
 }
@@ -72,10 +73,16 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const setSpelers = (nieuw: Player[]) => zetSpelersRuw(stempelInkomers(spelers, nieuw))
 
-  const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score }[]>([])
+  // Scorers van onze doelpunten, in volgorde; null = onbekend
+  const [doelpunten, setDoelpunten] = useState<(string | null)[]>(() => {
+    const saved = localStorage.getItem(`${OPSLAG}_doelpunten`)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score; doelpunten: (string | null)[] }[]>([])
 
   const remember = () => {
-    setHistory(h => [...h, { spelers, wisselingen, score }])
+    setHistory(h => [...h, { spelers, wisselingen, score, doelpunten }])
   }
 
   const undo = () => {
@@ -84,6 +91,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     zetSpelersRuw(last.spelers)
     setWisselingen(last.wisselingen)
     setScore(last.score)
+    setDoelpunten(last.doelpunten)
     setHistory(history.slice(0, -1))
   }
 
@@ -98,6 +106,10 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem(`${OPSLAG}_score`, JSON.stringify(score))
   }, [score])
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_doelpunten`, JSON.stringify(doelpunten))
+  }, [doelpunten])
 
   useEffect(() => {
     localStorage.setItem(`${OPSLAG}_vaste_posities`, JSON.stringify(vastePosities))
@@ -182,12 +194,14 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   const resetScore = () => {
     remember()
     setScore({ wij: 0, zij: 0 })
+    setDoelpunten([])
   }
 
-  const scoor = (team: keyof Score, verschil: 1 | -1) => {
+  const scoor = (team: keyof Score, verschil: 1 | -1, scorerId: string | null = null) => {
     if (score[team] + verschil < 0) return
     remember()
     setScore({ ...score, [team]: score[team] + verschil })
+    if (team === 'wij') setDoelpunten(verschil === 1 ? [...doelpunten, scorerId] : doelpunten.slice(0, -1))
   }
 
 
@@ -204,7 +218,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten }}>
       {children}
     </HockeyContext.Provider>
   )

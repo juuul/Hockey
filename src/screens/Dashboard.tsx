@@ -4,20 +4,28 @@ import { Position, POSITIE_LABEL } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
 import Timer from '../components/Timer'
+import ScorerModal from '../components/ScorerModal'
 import { tel } from '../statistiek'
 import { sorteerWissels, veldKleuren } from '../opstelling'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore } = useHockey()
+  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
   const [vraag, setVraag] = useState<'wissels' | 'opstelling' | null>(null)
+  const [kiesScorer, setKiesScorer] = useState(false)
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
   const keeper = spelers.find(s => s.isKeeper)
   const kleuren = veldKleuren(fieldPlayers)
+  const scorerOverzicht = Object.entries(
+    doelpunten.reduce<Record<string, number>>((perNaam, id) => {
+      const naam = spelers.find(s => s.id === id)?.naam ?? 'Onbekend'
+      return { ...perNaam, [naam]: (perNaam[naam] ?? 0) + 1 }
+    }, {})
+  ).map(([naam, aantal]) => ({ naam, aantal })).sort((a, b) => b.aantal - a.aantal)
   const substitutes = sorteerWissels(spelers.filter(s => !s.inVeld && s.meedoen), wisselingen)
   // Eén regel wissels past in beeld; de rest staat onder de vouw, bereikbaar door de pagina te scrollen
   const wisselsInBeeld = substitutes.slice(0, 2)
@@ -92,7 +100,7 @@ export default function Dashboard() {
     <div className="dashboard">
       <div className="score-regel">
         <button className="score-min" onClick={() => { scoor('wij', -1); tel('score-wij-min') }} disabled={score.wij === 0} aria-label="Doelpunt wij eraf">−</button>
-        <button className="score-team wij" onClick={() => { scoor('wij', 1); tel('score-wij') }} aria-label={`Wij ${score.wij}, doelpunt erbij`}>
+        <button className="score-team wij" onClick={() => setKiesScorer(true)} aria-label={`Wij ${score.wij}, doelpunt erbij`}>
           <span className="score-naam">Wij</span>
           <span className="score-getal">{score.wij}</span>
         </button>
@@ -126,6 +134,16 @@ export default function Dashboard() {
     )}
 
     <div className="dashboard-knoppen">
+      {doelpunten.length > 0 && (
+        <div className="doelpunten">
+          <div className="section-title">Doelpunten</div>
+          <div className="doelpunten-lijst">
+            {scorerOverzicht.map(({ naam, aantal }) => (
+              <span key={naam} className="doelpunt-scorer">{naam} <strong>{aantal}</strong></span>
+            ))}
+          </div>
+        </div>
+      )}
       <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
       <button className="btn btn-secondary" onClick={() => setVraag('opstelling')}>Nieuwe opstelling</button>
       <button className="btn btn-secondary" onClick={() => setVraag('wissels')}>Reset wissels</button>
@@ -143,6 +161,15 @@ export default function Dashboard() {
           onClose={() => setShowSubstituteModal(false)}
           leegPlek={!getPlayerByPosition(selectedPosition)}
           alleenVerplaatsen={selectedPosition === 'K'}
+        />
+      )}
+
+      {kiesScorer && (
+        <ScorerModal
+          spelers={spelers}
+          doelpunten={doelpunten}
+          onKies={id => { scoor('wij', 1, id); tel(id ? 'score-wij' : 'score-wij-onbekend'); setKiesScorer(false) }}
+          onClose={() => setKiesScorer(false)}
         />
       )}
 

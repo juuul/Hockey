@@ -18,6 +18,21 @@
   border-radius: 8px;
 }
 
+.doelpunten {
+  padding: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.doelpunten-lijst {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: var(--base-readable-size);
+  color: #1f2937;
+}
+
 .dashboard-knoppen {
   display: flex;
   flex-direction: column;
