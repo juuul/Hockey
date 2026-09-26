@@ -122,10 +122,11 @@ export default function Dashboard() {
       </div>
 
       {/* Wisselspelers */}
-      <div className="substitutes-section">
-        <div className="section-title">Wissels</div>
-        <div className="substitutes-list">{wisselsInBeeld.map(wisselTegel)}</div>
-      </div>
+      {wisselsInBeeld.length > 0 && (
+        <div className="substitutes-section">
+          <div className="substitutes-list">{wisselsInBeeld.map(wisselTegel)}</div>
+        </div>
+      )}
 
     </div>
 

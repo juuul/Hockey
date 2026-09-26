@@ -243,7 +243,7 @@
 .substitutes-section {
   background: #f9fafb;
   border-radius: 8px;
-  padding: 8px;
+  padding: 4px;
   border: 1px solid #e5e7eb;
   flex: 0 0 auto;
 }
@@ -267,8 +267,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 72px;
-  padding: 10px 14px;
+  min-height: 60px;
+  padding: 6px 12px;
   background: white;
   border-radius: 10px;
   border: 2px solid #e5e7eb;
