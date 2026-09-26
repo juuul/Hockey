@@ -6,6 +6,7 @@ export interface Player {
   positie: Position;
   inVeld: boolean;
   meedoen: boolean;
+  inSinds?: number; // speeltijd (ms op de wedstrijdtimer) waarop de speler het veld in kwam
   wisselCount: number;
   isKeeper: boolean;
 }

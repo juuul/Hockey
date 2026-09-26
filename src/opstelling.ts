@@ -72,3 +72,26 @@ export function sorteerWissels(wissels: Player[], wisselingen: Wissel[]): Player
   const laatstUit = (id: string) => wisselingen.map(w => w.uitSpeler).lastIndexOf(id)
   return [...wissels].sort((a, b) => a.wisselCount - b.wisselCount || laatstUit(a.id) - laatstUit(b.id))
 }
+
+// Wie net het veld in kwam, krijgt de huidige speeltijd als starttijd
+export function stempelInkomers(oud: Player[], nieuw: Player[], speeltijd: number): Player[] {
+  return nieuw.map(s => {
+    const voorheen = oud.find(o => o.id === s.id)
+    return s.inVeld && !voorheen?.inVeld ? { ...s, inSinds: speeltijd } : s
+  })
+}
+
+export type VeldKleur = 'groen' | 'oranje' | 'rood'
+
+// Relatief: langst erin = groen, net erin = rood. Liggen alle tijden binnen een minuut, dan geen kleur
+export function veldKleuren(veldspelers: Player[], speeltijd: number): Record<string, VeldKleur> {
+  const duur = veldspelers.map(s => ({ id: s.id, d: speeltijd - (s.inSinds ?? 0) }))
+  if (duur.length === 0) return {}
+  const min = Math.min(...duur.map(x => x.d))
+  const max = Math.max(...duur.map(x => x.d))
+  if (max - min < 60_000) return {}
+  return Object.fromEntries(duur.map(({ id, d }) => {
+    const t = (d - min) / (max - min)
+    return [id, t >= 2 / 3 ? 'groen' : t <= 1 / 3 ? 'rood' : 'oranje']
+  }))
+}
