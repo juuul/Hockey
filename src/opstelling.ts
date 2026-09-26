@@ -73,25 +73,23 @@ export function sorteerWissels(wissels: Player[], wisselingen: Wissel[]): Player
   return [...wissels].sort((a, b) => a.wisselCount - b.wisselCount || laatstUit(a.id) - laatstUit(b.id))
 }
 
-// Wie net het veld in kwam, krijgt de huidige speeltijd als starttijd
-export function stempelInkomers(oud: Player[], nieuw: Player[], speeltijd: number): Player[] {
+// Wie het veld in komt, krijgt het volgende volgnummer (wie samen invallen, krijgen hetzelfde)
+export function stempelInkomers(oud: Player[], nieuw: Player[]): Player[] {
+  const volgende = Math.max(0, ...oud.map(s => s.inVolgorde ?? 0)) + 1
   return nieuw.map(s => {
     const voorheen = oud.find(o => o.id === s.id)
-    return s.inVeld && !voorheen?.inVeld ? { ...s, inSinds: speeltijd } : s
+    return s.inVeld && !voorheen?.inVeld ? { ...s, inVolgorde: volgende } : s
   })
 }
 
 export type VeldKleur = 'groen' | 'oranje' | 'rood'
 
-// Relatief: langst erin = groen, net erin = rood. Liggen alle tijden binnen een minuut, dan geen kleur
-export function veldKleuren(veldspelers: Player[], speeltijd: number): Record<string, VeldKleur> {
-  const duur = veldspelers.map(s => ({ id: s.id, d: speeltijd - (s.inSinds ?? 0) }))
-  if (duur.length === 0) return {}
-  const min = Math.min(...duur.map(x => x.d))
-  const max = Math.max(...duur.map(x => x.d))
-  if (max - min < 60_000) return {}
-  return Object.fromEntries(duur.map(({ id, d }) => {
-    const t = (d - min) / (max - min)
-    return [id, t >= 2 / 3 ? 'groen' : t <= 1 / 3 ? 'rood' : 'oranje']
+// Op volgorde van invallen: eerst erin = groen, laatst erin = rood. Staat iedereen er even lang (zelfde moment), dan geen kleur
+export function veldKleuren(veldspelers: Player[]): Record<string, VeldKleur> {
+  const momenten = [...new Set(veldspelers.map(s => s.inVolgorde ?? 0))].sort((a, b) => a - b)
+  if (momenten.length < 2) return {}
+  return Object.fromEntries(veldspelers.map(s => {
+    const t = momenten.indexOf(s.inVolgorde ?? 0) / (momenten.length - 1)
+    return [s.id, t < 1 / 3 ? 'groen' : t > 2 / 3 ? 'rood' : 'oranje']
   }))
 }

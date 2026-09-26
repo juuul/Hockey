@@ -24,16 +24,11 @@ interface HockeyContextType {
   score: Score
   scoor: (team: keyof Score, verschil: 1 | -1) => void
   resetScore: () => void
-  speeltijd: number
-  timerLoopt: boolean
-  startTimer: () => void
-  pauzeTimer: () => void
-  stopTimer: () => void
   setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
 }
 
 // Test en live delen dezelfde origin (github.io), dus aparte opslag
-const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
+export const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 
@@ -75,36 +70,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     return saved ? JSON.parse(saved) : { wij: 0, zij: 0 }
   })
 
-  // Starttijdstip + opgebouwde tijd i.p.v. een teller: zo klopt de tijd ook na verversen of een vergrendeld scherm
-  const [timer, setTimer] = useState<{ gestartOp: number | null; opgebouwd: number }>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_timer`)
-    return saved ? JSON.parse(saved) : { gestartOp: null, opgebouwd: 0 }
-  })
-  const [nu, setNu] = useState(Date.now())
-  const timerLoopt = timer.gestartOp !== null
-  const speeltijd = timer.opgebouwd + (timer.gestartOp !== null ? nu - timer.gestartOp : 0)
-
-  useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_timer`, JSON.stringify(timer))
-  }, [timer])
-
-  useEffect(() => {
-    if (!timerLoopt) return
-    setNu(Date.now())
-    const id = setInterval(() => setNu(Date.now()), 500)
-    return () => clearInterval(id)
-  }, [timerLoopt])
-
-  const huidigeSpeeltijd = () => timer.opgebouwd + (timer.gestartOp !== null ? Date.now() - timer.gestartOp : 0)
-
-  const setSpelers = (nieuw: Player[]) => zetSpelersRuw(stempelInkomers(spelers, nieuw, huidigeSpeeltijd()))
-
-  const startTimer = () => setTimer({ ...timer, gestartOp: Date.now() })
-  const pauzeTimer = () => setTimer({ gestartOp: null, opgebouwd: huidigeSpeeltijd() })
-  const stopTimer = () => {
-    setTimer({ gestartOp: null, opgebouwd: 0 })
-    zetSpelersRuw(spelers.map(s => s.inVeld ? { ...s, inSinds: 0 } : s))
-  }
+  const setSpelers = (nieuw: Player[]) => zetSpelersRuw(stempelInkomers(spelers, nieuw))
 
   const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score }[]>([])
 
@@ -210,8 +176,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const nieuweOpstelling = () => {
     remember()
-    const tijd = huidigeSpeeltijd()
-    zetSpelersRuw(lootOpstelling(spelers, vastePosities).map(s => s.inVeld ? { ...s, inSinds: tijd } : s))
+    zetSpelersRuw(lootOpstelling(spelers, vastePosities).map(s => ({ ...s, inVolgorde: 0 })))
   }
 
   const resetScore = () => {
@@ -239,7 +204,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, speeltijd, timerLoopt, startTimer, pauzeTimer, stopTimer }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore }}>
       {children}
     </HockeyContext.Provider>
   )
