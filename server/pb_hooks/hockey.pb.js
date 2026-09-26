@@ -169,3 +169,25 @@ routerAdd("POST", "/api/hockey/aanmelding/{token}", (e) => {
   }
   throw new BadRequestError("Kies goedkeuren of afwijzen")
 })
+
+// ── Foutmeldingen uit de app ──
+routerAdd("POST", "/api/hockey/fout", (e) => {
+  const b = e.requestInfo().body
+  const tekst = (v, max) => String(v == null ? "" : v).slice(0, max)
+  const r = new Record(e.app.findCollectionByNameOrId("foutmeldingen"))
+  r.set("soort", tekst(b.soort, 30))
+  r.set("bericht", tekst(b.bericht, 1000))
+  r.set("stack", tekst(b.stack, 4000))
+  // Alleen het pad: geen #tokens of ?-parameters bewaren
+  r.set("adres", tekst(b.adres, 300).split("#")[0].split("?")[0])
+  r.set("versie", tekst(b.versie, 100))
+  r.set("agent", tekst(e.request.header.get("User-Agent"), 300))
+  r.set("gebruiker", e.auth ? e.auth.id : "")
+  e.app.save(r)
+  // Oude meldingen opruimen: alleen de laatste 1000 bewaren
+  try {
+    const oud = e.app.findRecordsByFilter("foutmeldingen", "", "-created", 100, 1000)
+    for (const o of oud) e.app.delete(o)
+  } catch (_) {}
+  return e.json(200, { ok: true })
+})

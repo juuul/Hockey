@@ -80,6 +80,7 @@ Bediend op een telefoon van ~10 cm diagonaal (~360px breed):
 - Dev server: `npm run dev` op poort 5173 (`host: true`), bereikbaar via http://192.168.2.50:5173/ (poort 8765 is bezet).
 - `src/opstelling.ts`: pure functies (loting, tellers, afmelden, plaatsen, opstelling aanpassen, kleuren, sorteren) — hier logica toevoegen en testen.
 - `src/historie.ts`: pure functies voor wedstrijden/clubs (balans, topscorers, per tegenstander, zoeken, datum).
+- `src/foutmelder.ts` + `src/components/Foutvanger.tsx`: JS-fouten, mislukte beloftes, crashes (met "Opnieuw laden"-scherm) en herladen door oude cache gaan naar `POST /api/hockey/fout` (max 5 per keer laden, dubbel één keer, 30 per uur per bezoeker, laatste 1000 bewaard; adres zonder # en ?). Lezen: superadmin, of Claude alleen-lezen via sqlite op `server/pb_data/data.db` (tabel `foutmeldingen`).
 - `src/statistiek.ts`: GoatCounter (`juuul.goatcounter.com`); `tel('knop')` telt klikken, alleen in de gepubliceerde build, op test met voorvoegsel `test/`.
 
 ### Datamodel (`src/types.ts`)

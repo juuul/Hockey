@@ -3,8 +3,11 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { startStatistiek } from './statistiek'
+import { startFoutmelder } from './foutmelder'
+import Foutvanger from './components/Foutvanger'
 
 startStatistiek()
+startFoutmelder()
 
 // Geladen: de herlaad-beveiliging uit index.html mag weer, en het ?v=… uit het adres weg
 try {
@@ -16,6 +19,8 @@ if (window.location.search.includes('v=')) history.replaceState(null, '', window
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <Foutvanger>
+      <App />
+    </Foutvanger>
   </React.StrictMode>,
 )
