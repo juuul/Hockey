@@ -12,7 +12,7 @@ function formatteer(ms: number) {
 }
 
 export default function Timer() {
-  const { timer: stand, startTimer, pauzeTimer, stopTimer } = useHockey()
+  const { timer: stand, startTimer, pauzeTimer, stopTimer, magBewerken } = useHockey()
   const [nu, setNu] = useState(Date.now())
   const [stopVraag, setStopVraag] = useState(false)
   const loopt = stand.gestartOp !== null
@@ -43,11 +43,11 @@ export default function Timer() {
   return (
     <div className={`timer ${loopt ? 'loopt' : ''}`}>
       <div className="timer-tijd" aria-live="off">{formatteer(verstreken)}</div>
-      <div className="timer-knoppen">
+      {magBewerken && <div className="timer-knoppen">
         <button className="btn timer-start" onClick={start} disabled={loopt}>Start</button>
         <button className="btn btn-secondary" onClick={pauze} disabled={!loopt}>Pauze</button>
         <button className="btn btn-secondary" onClick={() => setStopVraag(true)} disabled={!loopt && verstreken === 0}>Stop</button>
-      </div>
+      </div>}
 
       {stopVraag && (
         <ResetModal

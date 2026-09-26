@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { Club, GespeeldeWedstrijd, OpstellingNaam, OPSTELLINGEN_PER_SPELVORM, Player, Position, Spelvorm, spelvormVan, veldPosities, Wissel, WedstrijdInfo } from '../types'
 import { nieuweOpstelling as lootOpstelling, resetTellers, stempelInkomers, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling, pasOpstellingAan } from '../opstelling'
 import { vandaag, vindClub } from '../historie'
 import { lees, OPSLAG, schrijf, teamOpslag } from '../opslag'
 import { Alles, Lokaal, naarRecords, nieuweIds, pbId, spelersToepassen, voorkeurenUit } from '../sync'
 import { SyncStatus, useTeamSync } from './useTeamSync'
+import { LiveStand, LiveStatus, useLiveStand } from './useLiveStand'
+import { Stand, spelersMetStand, spelersStand } from '../live'
 
 // Starttijdstip + opgebouwde tijd i.p.v. een teller: zo klopt de tijd ook na verversen of een vergrendeld scherm
 export interface TimerStand {
@@ -57,6 +59,7 @@ interface HockeyContextType {
   teamId: string | null
   magBewerken: boolean
   sync: SyncStatus | null
+  live: LiveStatus | null
   nuSynchroniseren: () => void
   overnemenVraag: { spelers: number; clubs: number; wedstrijden: number } | null
   overnemen: (ja: boolean) => void
@@ -379,13 +382,36 @@ export function HockeyProvider({ children, teamId = null, magBewerken = true }: 
   const toepassen = (nieuw: Alles) => {
     const oud = naarRecords(spelers, vastePosities, clubs, wedstrijden)
     if (JSON.stringify(nieuw.spelers) !== JSON.stringify(oud.spelers)) {
-      zetSpelersRuw(huidig => spelersToepassen(huidig, nieuw.spelers, haalUitVeld))
+      zetSpelersRuw(huidig => {
+        const bijgewerkt = spelersToepassen(huidig, nieuw.spelers, haalUitVeld)
+        // Net binnengekomen spelers: hun plek (veld/bank, wissels) staat misschien al in de live stand van het team
+        const bekendeStand = liveRef.current?.bekend()?.spelers ?? {}
+        return bijgewerkt.map(sp => (huidig.some(h => h.id === sp.id) || !bekendeStand[sp.id] ? sp : { ...sp, ...bekendeStand[sp.id] }))
+      })
       setVastePositiesState(voorkeurenUit(nieuw.spelers))
     }
     if (JSON.stringify(nieuw.clubs) !== JSON.stringify(oud.clubs)) setClubs(Object.values(nieuw.clubs) as unknown as Club[])
     if (JSON.stringify(nieuw.wedstrijden) !== JSON.stringify(oud.wedstrijden)) setWedstrijden(Object.values(nieuw.wedstrijden) as unknown as GespeeldeWedstrijd[])
   }
+  const liveRef = useRef<LiveStand | null>(null)
   const { status: sync, nuSynchroniseren } = useTeamSync({ teamId, prefix: P, records, toepassen })
+
+  // ── Lopende wedstrijd live delen met het team ──
+  const stand: Stand = { spelers: spelersStand(spelers), wisselingen, score, doelpunten, opstelling, timer, wedstrijd }
+  const standToepassen = (st: Stand) => {
+    zetSpelersRuw(huidig => spelersMetStand(huidig, st.spelers))
+    setWisselingen(st.wisselingen)
+    setScore(st.score)
+    setDoelpunten(st.doelpunten)
+    setOpstelling(st.opstelling)
+    setTimer(st.timer)
+    zetWedstrijd(st.wedstrijd)
+    // Undo van een ander toestel terugdraaien zou verwarrend zijn
+    setHistory([])
+  }
+  const liveStand = useLiveStand({ teamId, prefix: P, stand, toepassen: standToepassen, magBewerken })
+  liveRef.current = liveStand
+  const live = liveStand.status
 
   // Eerste keer in een leeg team: aanbieden om wat op deze telefoon staat mee te nemen
   const [gevraagd, setGevraagd] = useState(() => lees(P, 'overnemen_gevraagd', false))
@@ -426,7 +452,7 @@ export function HockeyProvider({ children, teamId = null, magBewerken = true }: 
   }
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten, clubs, clubToevoegen, hernoemClub, verwijderClub, wedstrijd, zetWedstrijd, wedstrijden, wedstrijdAfsluiten, wijzigWedstrijd, verwijderWedstrijd, teamId, magBewerken, sync: teamId ? sync : null, nuSynchroniseren, overnemenVraag, overnemen }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten, clubs, clubToevoegen, hernoemClub, verwijderClub, wedstrijd, zetWedstrijd, wedstrijden, wedstrijdAfsluiten, wijzigWedstrijd, verwijderWedstrijd, teamId, magBewerken, sync: teamId ? sync : null, live: teamId ? live : null, nuSynchroniseren, overnemenVraag, overnemen }}>
       {children}
     </HockeyContext.Provider>
   )

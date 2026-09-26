@@ -54,7 +54,7 @@ function Melding({ tekst, fout }: { tekst: string | null; fout?: boolean }) {
 
 // Hoe staat het met versturen naar de server?
 function SyncRegel() {
-  const { sync, nuSynchroniseren } = useHockey()
+  const { sync, live, nuSynchroniseren } = useHockey()
   if (!sync) return null
   const tekst = sync.offline
     ? `Geen verbinding${sync.wachtend ? `: ${sync.wachtend} wijziging${sync.wachtend > 1 ? 'en' : ''} wacht${sync.wachtend > 1 ? 'en' : ''}` : ''}. Wordt later verstuurd.`
@@ -62,9 +62,10 @@ function SyncRegel() {
     : !sync.geladen ? 'Gegevens ophalen…'
     : sync.wachtend ? 'Bezig met versturen…'
     : 'Alles is opgeslagen op de server.'
+  const liveTekst = !live ? '' : !live.verbonden ? ' Live: geen verbinding.' : live.wachtend ? ' Live: bezig…' : ' Wedstrijd live gedeeld.'
   return (
-    <button className={`account-sync ${sync.offline || sync.fout ? 'fout' : ''}`} onClick={nuSynchroniseren}>
-      {tekst}
+    <button className={`account-sync ${sync.offline || sync.fout || (live && !live.verbonden) ? 'fout' : ''}`} onClick={nuSynchroniseren}>
+      {tekst}{liveTekst}
     </button>
   )
 }

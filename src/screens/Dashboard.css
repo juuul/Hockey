@@ -358,3 +358,31 @@
   font-size: var(--base-readable-size);
   color: #4b5563;
 }
+
+/* Kijkers: knoppen doen niets, maar het veld en de score zien er gewoon uit */
+.player-slot:disabled,
+.score-team:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.player-slot:disabled {
+  color: #1e40af;
+}
+
+.player-slot.keeper:disabled {
+  color: #7c2d12;
+}
+
+.player-slot.leeg:disabled {
+  color: white;
+}
+
+.kijker-melding {
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+  line-height: 1.3;
+  padding: 8px 10px;
+  background: #eef2ff;
+  border-radius: 8px;
+}

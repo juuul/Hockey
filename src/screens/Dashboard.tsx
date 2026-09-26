@@ -86,6 +86,7 @@ export default function Dashboard() {
         key={pos}
         className={`player-slot ${pos === 'K' ? 'keeper' : ''} ${player ? kleuren[player.id] ?? '' : 'leeg'}`}
         onClick={() => handlePlayerClick(pos)}
+        disabled={!magBewerken}
         aria-label={player ? undefined : `Lege plek ${POSITIE_LABEL[pos]}: iemand erin zetten`}
       >
         {player ? (
@@ -104,16 +105,16 @@ export default function Dashboard() {
     <>
     <div className="dashboard">
       <div className="score-regel">
-        <button className="score-min" onClick={() => { scoor('wij', -1); tel('score-wij-min') }} disabled={score.wij === 0} aria-label="Doelpunt wij eraf">−</button>
-        <button className="score-team wij" onClick={() => setKiesScorer(true)} aria-label={`Wij ${score.wij}, doelpunt erbij`}>
+        <button className="score-min" onClick={() => { scoor('wij', -1); tel('score-wij-min') }} disabled={!magBewerken || score.wij === 0} aria-label="Doelpunt wij eraf">−</button>
+        <button className="score-team wij" onClick={() => setKiesScorer(true)} disabled={!magBewerken} aria-label={`Wij ${score.wij}, doelpunt erbij`}>
           <span className="score-naam">Wij</span>
           <span className="score-getal">{score.wij}</span>
         </button>
-        <button className="score-team zij" onClick={() => { scoor('zij', 1); tel('score-zij') }} aria-label={`Zij ${score.zij}, doelpunt erbij`}>
+        <button className="score-team zij" onClick={() => { scoor('zij', 1); tel('score-zij') }} disabled={!magBewerken} aria-label={`Zij ${score.zij}, doelpunt erbij`}>
           <span className="score-getal">{score.zij}</span>
           <span className="score-naam">Zij</span>
         </button>
-        <button className="score-min" onClick={() => { scoor('zij', -1); tel('score-zij-min') }} disabled={score.zij === 0} aria-label="Doelpunt zij eraf">−</button>
+        <button className="score-min" onClick={() => { scoor('zij', -1); tel('score-zij-min') }} disabled={!magBewerken || score.zij === 0} aria-label="Doelpunt zij eraf">−</button>
       </div>
 
       <div className="field-container">
@@ -140,12 +141,13 @@ export default function Dashboard() {
     )}
 
     <div className="dashboard-knoppen">
+      {!magBewerken && <p className="kijker-melding">Je kijkt live mee. Alleen beheerders kunnen de wedstrijd bijhouden.</p>}
       <button className="wedstrijd-kaart" onClick={() => setWedstrijdVraag('gegevens')} disabled={!magBewerken}>
         <span className="wedstrijd-kaart-club">{tegenstander ? `Tegen ${tegenstander}` : 'Kies tegenstander'}</span>
         <span className="wedstrijd-kaart-info">{wedstrijd.thuis ? 'Thuis' : 'Uit'} · {wedstrijd.datum ? datumTekst(wedstrijd.datum) : 'vandaag'}</span>
       </button>
       {magBewerken && <button className="btn btn-primary" onClick={() => setWedstrijdVraag('afsluiten')}>Wedstrijd afsluiten</button>}
-      <button className="btn btn-gevaar" onClick={() => setVraag('alles')}>Alles resetten</button>
+      {magBewerken && <button className="btn btn-gevaar" onClick={() => setVraag('alles')}>Alles resetten</button>}
       {doelpunten.length > 0 && (
         <div className="doelpunten">
           <div className="section-title">Doelpunten</div>
@@ -156,10 +158,14 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
-      <button className="btn btn-secondary" onClick={() => setVraag('opstelling')}>Nieuwe opstelling</button>
-      <button className="btn btn-secondary" onClick={() => setVraag('wissels')}>Reset wissels</button>
-      <button className="btn btn-secondary" onClick={() => { resetScore(); tel('score-reset') }} disabled={score.wij === 0 && score.zij === 0}>Score 0 – 0</button>
+      {magBewerken && (
+        <>
+          <button className="btn btn-secondary" onClick={() => { undo(); tel('undo') }} disabled={!canUndo}>Undo</button>
+          <button className="btn btn-secondary" onClick={() => setVraag('opstelling')}>Nieuwe opstelling</button>
+          <button className="btn btn-secondary" onClick={() => setVraag('wissels')}>Reset wissels</button>
+          <button className="btn btn-secondary" onClick={() => { resetScore(); tel('score-reset') }} disabled={score.wij === 0 && score.zij === 0}>Score 0 – 0</button>
+        </>
+      )}
       <Timer />
 
       {showSubstituteModal && (

@@ -10,8 +10,8 @@ import './Account.css'
 
 export default function Players({ openAccount }: { openAccount: () => void }) {
   const { gebruiker, actiefTeam } = useAccount()
-  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, opstelling, kiesOpstelling, magBewerken, sync } = useHockey()
-  const syncTeken = sync && (sync.offline || sync.fout) ? ' ⚠' : sync && sync.wachtend ? ' ⏳' : ''
+  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, opstelling, kiesOpstelling, magBewerken, sync, live } = useHockey()
+  const syncTeken = (sync && (sync.offline || sync.fout)) || (live && !live.verbonden) ? ' ⚠' : (sync && sync.wachtend) || live?.wachtend ? ' ⏳' : ''
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
@@ -60,6 +60,7 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
             aria-checked={spelvorm === v}
             className={`spelvorm-knop ${spelvorm === v ? 'actief' : ''}`}
             onClick={() => { if (v !== spelvorm) { kiesOpstelling(OPSTELLINGEN_PER_SPELVORM[v][0]); tel(`spelvorm-${v}`) } }}
+            disabled={!magBewerken}
           >
             {v} spelers
           </button>
@@ -73,6 +74,7 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
             aria-checked={opstelling === naam}
             className={`spelvorm-knop ${opstelling === naam ? 'actief' : ''}`}
             onClick={() => { kiesOpstelling(naam); tel(`opstelling-${naam}`) }}
+            disabled={!magBewerken}
           >
             {naam}
           </button>
@@ -83,7 +85,9 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
         <div className="section-title">Wie doet mee?</div>
         {magBewerken && <button className="btn-icon" onClick={() => setShowAddModal(true)}>+ Speler</button>}
       </div>
-      <p className="players-uitleg">Tik op een speler om aan of af te melden. Wie niet meedoet, komt niet in de opstelling en niet bij de wissels.</p>
+      <p className="players-uitleg">{magBewerken
+        ? 'Tik op een speler om aan of af te melden. Wie niet meedoet, komt niet in de opstelling en niet bij de wissels.'
+        : 'Alleen beheerders kunnen aan- en afmelden.'}</p>
 
       <div className="players-list">
         {spelers.map(player => (
@@ -93,6 +97,7 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
               role="switch"
               aria-checked={player.meedoen}
               onClick={() => schakel(player)}
+              disabled={!magBewerken}
             >
               <span className="player-info">
                 <span className="player-naamregel">
