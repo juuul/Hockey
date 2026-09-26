@@ -11,13 +11,13 @@ function schud<T>(lijst: T[]): T[] {
 
 // Eerst eerlijk loten wie begint, pas daarna plaatsen: anders zitten spelers met een vaste positie nooit op de bank.
 // Eerst krijgt iedereen zo mogelijk zijn 1e keuze, daarna zijn 2e. Door de geschudde volgorde wint bij een dubbele keuze een willekeurige speler.
-export function nieuweOpstelling(spelers: Player[], vastePosities: Record<string, string[]>): Player[] {
+export function nieuweOpstelling(spelers: Player[], vastePosities: Record<string, string[]>, posities: Position[] = VELD_VOLGORDE): Player[] {
   const geschud = schud(spelers.filter(s => !s.isKeeper && s.meedoen))
-  const basis = geschud.slice(0, VELD_VOLGORDE.length)
-  const bank = geschud.slice(VELD_VOLGORDE.length)
+  const basis = geschud.slice(0, posities.length)
+  const bank = geschud.slice(posities.length)
 
   const placed = new Map<string, Player>()
-  const vrij = [...VELD_VOLGORDE]
+  const vrij = [...posities]
   for (const keuze of [0, 1]) {
     basis.filter(s => !placed.has(s.id)).forEach(s => {
       const wens = vastePosities[s.id]?.[keuze] as Position | undefined
@@ -55,10 +55,10 @@ export function haalUitVeld(spelers: Player[], id: string): Player[] {
     : zonder
 }
 
-export function zetMeedoen(spelers: Player[], id: string, meedoen: boolean): Player[] {
+export function zetMeedoen(spelers: Player[], id: string, meedoen: boolean, posities: Position[] = VELD_VOLGORDE): Player[] {
   if (!meedoen) return haalUitVeld(spelers, id).map(s => s.id === id ? { ...s, meedoen: false } : s)
   const bezet = new Set(spelers.filter(s => s.inVeld && !s.isKeeper).map(s => s.positie))
-  const leeg = VELD_VOLGORDE.find(p => !bezet.has(p))
+  const leeg = posities.find(p => !bezet.has(p))
   return spelers.map(s => s.id === id ? { ...s, meedoen: true, inVeld: !!leeg, positie: leeg ?? s.positie } : s)
 }
 
@@ -84,13 +84,13 @@ export function stempelInkomers(oud: Player[], nieuw: Player[]): Player[] {
 
 export type VeldKleur = 'groen' | 'oranje' | 'rood'
 
-// Op volgorde van invallen: laatste 2 invallers rood, 2 daarvoor oranje, de rest (ook de basis) groen
-export function veldKleuren(veldspelers: Player[]): Record<string, VeldKleur> {
+// Op volgorde van invallen: laatste invallers rood, die daarvoor oranje, de rest (ook de basis) groen
+export function veldKleuren(veldspelers: Player[], perKleur = 2): Record<string, VeldKleur> {
   const invallers = veldspelers
     .filter(s => (s.inVolgorde ?? 0) > 0)
     .sort((a, b) => (b.inVolgorde ?? 0) - (a.inVolgorde ?? 0))
   return Object.fromEntries(veldspelers.map(s => {
     const plek = invallers.indexOf(s)
-    return [s.id, plek === -1 || plek >= 4 ? 'groen' : plek < 2 ? 'rood' : 'oranje']
+    return [s.id, plek === -1 || plek >= 2 * perKleur ? 'groen' : plek < perKleur ? 'rood' : 'oranje']
   }))
 }

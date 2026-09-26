@@ -11,6 +11,32 @@
   overflow-y: auto;
 }
 
+.spelvorm {
+  display: flex;
+  gap: 0;
+  border: 2px solid #1e40af;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.spelvorm-knop {
+  flex: 1;
+  min-height: 60px;
+  border: none;
+  background: white;
+  color: #1e40af;
+  font-family: inherit;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spelvorm-knop.actief {
+  background: #1e40af;
+  color: white;
+}
+
 .section-header {
   display: flex;
   flex-wrap: wrap;

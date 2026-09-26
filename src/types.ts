@@ -31,4 +31,15 @@ export const POSITIE_LABEL: Record<Position, string> = {
   K: 'keeper',
 };
 
+// Van voor naar achter; ook de sorteervolgorde voor elke spelvorm
 export const VELD_VOLGORDE: Position[] = ['LW', 'RW', 'LM', 'CM', 'RM', 'LBM', 'CBM', 'RBM'];
+
+// Totaal aantal spelers incl. keeper
+export type Spelvorm = 9 | 6;
+
+export const OPSTELLING: Record<Spelvorm, Position[][]> = {
+  9: [['LW', 'RW'], ['LM', 'CM', 'RM'], ['LBM', 'CBM', 'RBM']],
+  6: [['LW', 'RW'], ['CM'], ['LBM', 'RBM']],
+};
+
+export const veldPosities = (spelvorm: Spelvorm): Position[] => OPSTELLING[spelvorm].flat();

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Player, Position, Wissel } from '../types'
+import { Player, Position, Spelvorm, veldPosities, Wissel } from '../types'
 import { nieuweOpstelling as lootOpstelling, resetTellers, stempelInkomers, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling } from '../opstelling'
 
 export interface Score {
@@ -24,6 +24,8 @@ interface HockeyContextType {
   score: Score
   scoor: (team: keyof Score, verschil: 1 | -1, scorerId?: string | null) => void
   doelpunten: (string | null)[]
+  spelvorm: Spelvorm
+  kiesSpelvorm: (spelvorm: Spelvorm) => void
   resetScore: () => void
   setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
 }
@@ -78,6 +80,16 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem(`${OPSLAG}_doelpunten`)
     return saved ? JSON.parse(saved) : []
   })
+
+  const [spelvorm, setSpelvorm] = useState<Spelvorm>(() => {
+    const saved = localStorage.getItem(`${OPSLAG}_spelvorm`)
+    return saved ? JSON.parse(saved) : 9
+  })
+  const posities = veldPosities(spelvorm)
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_spelvorm`, JSON.stringify(spelvorm))
+  }, [spelvorm])
 
   const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score; doelpunten: (string | null)[] }[]>([])
 
@@ -137,7 +149,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const zetMeedoen = (id: string, meedoen: boolean) => {
     remember()
-    setSpelers(zetMeedoenIn(spelers, id, meedoen))
+    setSpelers(zetMeedoenIn(spelers, id, meedoen, posities))
   }
 
   const plaatsIn = (id: string, positie: Position) => {
@@ -188,7 +200,15 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   const nieuweOpstelling = () => {
     remember()
-    zetSpelersRuw(lootOpstelling(spelers, vastePosities).map(s => ({ ...s, inVolgorde: 0 })))
+    zetSpelersRuw(lootOpstelling(spelers, vastePosities, posities).map(s => ({ ...s, inVolgorde: 0 })))
+  }
+
+  // Andere spelvorm = andere posities, dus meteen opnieuw loten
+  const kiesSpelvorm = (nieuw: Spelvorm) => {
+    if (nieuw === spelvorm) return
+    remember()
+    setSpelvorm(nieuw)
+    zetSpelersRuw(lootOpstelling(spelers, vastePosities, veldPosities(nieuw)).map(s => ({ ...s, inVolgorde: 0 })))
   }
 
   const resetScore = () => {
@@ -218,7 +238,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, kiesSpelvorm }}>
       {children}
     </HockeyContext.Provider>
   )

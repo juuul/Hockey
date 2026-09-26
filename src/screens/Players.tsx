@@ -7,7 +7,7 @@ import { tel } from '../statistiek'
 import './Players.css'
 
 export default function Players() {
-  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten } = useHockey()
+  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, kiesSpelvorm } = useHockey()
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
@@ -41,6 +41,20 @@ export default function Players() {
 
   return (
     <div className="players-screen">
+      <div className="spelvorm" role="radiogroup" aria-label="Spelvorm">
+        {([9, 6] as const).map(v => (
+          <button
+            key={v}
+            role="radio"
+            aria-checked={spelvorm === v}
+            className={`spelvorm-knop ${spelvorm === v ? 'actief' : ''}`}
+            onClick={() => { kiesSpelvorm(v); tel(`spelvorm-${v}`) }}
+          >
+            {v} spelers
+          </button>
+        ))}
+      </div>
+
       <div className="section-header">
         <div className="section-title">Wie doet mee?</div>
         <button className="btn-icon" onClick={() => setShowAddModal(true)}>+ Speler</button>

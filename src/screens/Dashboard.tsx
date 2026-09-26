@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
-import { Position, POSITIE_LABEL } from '../types'
+import { OPSTELLING, Position, POSITIE_LABEL } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
 import Timer from '../components/Timer'
@@ -10,7 +10,7 @@ import { sorteerWissels, veldKleuren } from '../opstelling'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten } = useHockey()
+  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
@@ -19,7 +19,7 @@ export default function Dashboard() {
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
   const keeper = spelers.find(s => s.isKeeper)
-  const kleuren = veldKleuren(fieldPlayers)
+  const kleuren = veldKleuren(fieldPlayers, spelvorm === 6 ? 1 : 2)
   const scorerOverzicht = Object.entries(
     doelpunten.reduce<Record<string, number>>((perNaam, id) => {
       const naam = spelers.find(s => s.id === id)?.naam ?? 'Onbekend'
@@ -113,9 +113,9 @@ export default function Dashboard() {
 
       <div className="field-container">
         <div className="field">
-          <div className="field-row">{(['LW', 'RW'] as Position[]).map(slot)}</div>
-          <div className="field-row">{(['LM', 'CM', 'RM'] as Position[]).map(slot)}</div>
-          <div className="field-row">{(['LBM', 'CBM', 'RBM'] as Position[]).map(slot)}</div>
+          {OPSTELLING[spelvorm].map(rij => (
+            <div key={rij.join()} className="field-row">{rij.map(slot)}</div>
+          ))}
           <div className="field-row single">{slot('K')}</div>
         </div>
       </div>
