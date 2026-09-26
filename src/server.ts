@@ -1,7 +1,6 @@
 import PocketBase, { ClientResponseError, LocalAuthStore, RecordModel } from 'pocketbase'
+import { OPSLAG } from './opslag'
 
-// Test en live delen dezelfde origin: elk een eigen inlog-opslag
-const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 
 export const pb = new PocketBase(import.meta.env.VITE_SERVER ?? 'https://serverbot.taild1b3c5.ts.net', new LocalAuthStore(`${OPSLAG}_auth`))
 pb.autoCancellation(false)

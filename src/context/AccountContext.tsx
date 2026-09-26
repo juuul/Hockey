@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { Gebruiker, pb, Team } from '../server'
+import { Gebruiker, pb, rolIn, Team } from '../server'
+import { lees, OPSLAG, schrijf } from '../opslag'
 
 interface AccountContextType {
   gebruiker: Gebruiker | null
@@ -7,19 +8,38 @@ interface AccountContextType {
   teamsLaden: () => Promise<void>
   inloggen: (email: string, wachtwoord: string) => Promise<void>
   uitloggen: () => void
+  actiefTeam: Team | null
+  actiefTeamId: string | null
+  kiesTeam: (id: string | null) => void
+  magBewerken: boolean
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined)
 
 export function AccountProvider({ children }: { children: React.ReactNode }) {
   const [gebruiker, setGebruiker] = useState<Gebruiker | null>(() => (pb.authStore.isValid ? (pb.authStore.record as Gebruiker) : null))
-  const [teams, setTeams] = useState<Team[]>([])
+  const [teams, setTeams] = useState<Team[]>(() => lees(OPSLAG, 'teams', []))
+  // Welk team de app gebruikt; bewaard zodat het ook zonder verbinding bij het opstarten klopt
+  const [actiefTeamId, setActiefTeamId] = useState<string | null>(() => (pb.authStore.isValid ? lees(OPSLAG, 'actief_team', null) : null))
+
+  const kiesTeam = (id: string | null) => {
+    setActiefTeamId(id)
+    schrijf(OPSLAG, 'actief_team', id)
+  }
 
   useEffect(() => pb.authStore.onChange((_, record) => setGebruiker(pb.authStore.isValid ? (record as Gebruiker) : null)), [])
 
   const teamsLaden = useCallback(async () => {
     if (!pb.authStore.isValid) return setTeams([])
-    setTeams(await pb.collection('teams').getFullList<Team>({ sort: 'naam', expand: 'beheerders,kijkers' }))
+    const lijst = await pb.collection('teams').getFullList<Team>({ sort: 'naam', expand: 'beheerders,kijkers' })
+    setTeams(lijst)
+    schrijf(OPSLAG, 'teams', lijst)
+    // Actief team bestaat niet meer (of nog geen keuze): bij precies één team dat nemen
+    setActiefTeamId(huidig => {
+      const nieuw = huidig && lijst.some(t => t.id === huidig) ? huidig : lijst.length === 1 ? lijst[0].id : null
+      schrijf(OPSLAG, 'actief_team', nieuw)
+      return nieuw
+    })
   }, [])
 
   // Bij het opstarten de inlog verversen (en uitloggen als het account niet meer bestaat)
@@ -30,7 +50,13 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       .catch(err => { if (err?.status === 401 || err?.status === 404) pb.authStore.clear() })
   }, [teamsLaden])
 
-  useEffect(() => { if (!gebruiker) setTeams([]) }, [gebruiker])
+  useEffect(() => {
+    if (gebruiker) return
+    setTeams([])
+    schrijf(OPSLAG, 'teams', [])
+    setActiefTeamId(null)
+    schrijf(OPSLAG, 'actief_team', null)
+  }, [gebruiker])
 
   const inloggen = async (email: string, wachtwoord: string) => {
     await pb.collection('users').authWithPassword(email.trim().toLowerCase(), wachtwoord)
@@ -39,8 +65,12 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
   const uitloggen = () => pb.authStore.clear()
 
+  const actiefTeam = teams.find(t => t.id === actiefTeamId) ?? null
+  // Zonder team mag je alles (alleen deze telefoon); in een team alleen als beheerder of superadmin
+  const magBewerken = !actiefTeamId || !!gebruiker?.superadmin || (actiefTeam ? rolIn(actiefTeam, gebruiker?.id ?? '') === 'beheerder' : true)
+
   return (
-    <AccountContext.Provider value={{ gebruiker, teams, teamsLaden, inloggen, uitloggen }}>
+    <AccountContext.Provider value={{ gebruiker, teams, teamsLaden, inloggen, uitloggen, actiefTeam, actiefTeamId, kiesTeam, magBewerken }}>
       {children}
     </AccountContext.Provider>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAccount } from '../context/AccountContext'
+import { useHockey } from '../context/HockeyContext'
 import { appAdres, foutTekst, Gebruiker, pb, Rol, ROL_TEKST, ROL_UITLEG, ROL_VELD, rolIn, Uitnodiging } from '../server'
 import { tel } from '../statistiek'
 import '../components/Modal.css'
@@ -43,6 +44,23 @@ export default function Account({ start, onClose }: { start: AccountStart; onClo
 function Melding({ tekst, fout }: { tekst: string | null; fout?: boolean }) {
   if (!tekst) return null
   return <p className={`account-melding ${fout ? 'fout' : ''}`} role={fout ? 'alert' : 'status'}>{tekst}</p>
+}
+
+// Hoe staat het met versturen naar de server?
+function SyncRegel() {
+  const { sync, nuSynchroniseren } = useHockey()
+  if (!sync) return null
+  const tekst = sync.offline
+    ? `Geen verbinding${sync.wachtend ? `: ${sync.wachtend} wijziging${sync.wachtend > 1 ? 'en' : ''} wacht${sync.wachtend > 1 ? 'en' : ''}` : ''}. Wordt later verstuurd.`
+    : sync.fout ? `Versturen mislukt: ${sync.fout}`
+    : !sync.geladen ? 'Gegevens ophalen…'
+    : sync.wachtend ? 'Bezig met versturen…'
+    : 'Alles is opgeslagen op de server.'
+  return (
+    <button className={`account-sync ${sync.offline || sync.fout ? 'fout' : ''}`} onClick={nuSynchroniseren}>
+      {tekst}
+    </button>
+  )
 }
 
 function Inloggen({ email: startEmail = '' }: { email?: string }) {
@@ -96,7 +114,7 @@ function Inloggen({ email: startEmail = '' }: { email?: string }) {
 }
 
 function Overzicht({ gebruiker, openTeam }: { gebruiker: Gebruiker; openTeam: (id: string) => void }) {
-  const { teams, teamsLaden, uitloggen } = useAccount()
+  const { teams, teamsLaden, uitloggen, actiefTeamId, kiesTeam } = useAccount()
   const [nieuwTeam, setNieuwTeam] = useState('')
   const [fout, setFout] = useState<string | null>(null)
 
@@ -121,20 +139,37 @@ function Overzicht({ gebruiker, openTeam }: { gebruiker: Gebruiker; openTeam: (i
         {gebruiker.superadmin && <span className="account-wie-sub">Superadmin</span>}
       </div>
 
-      <h2 className="section-title">Teams</h2>
+      <h2 className="section-title">Werken met</h2>
       {teams.length === 0 && <p className="account-uitleg">Je zit nog in geen enkel team.</p>}
       <div className="account-lijst">
         {teams.map(t => {
           const rol = rolIn(t, gebruiker.id)
           const magBeheren = gebruiker.superadmin || rol === 'beheerder'
+          const actief = t.id === actiefTeamId
           return (
-            <button key={t.id} className="account-regel" onClick={() => openTeam(t.id)} disabled={!magBeheren}>
-              <span className="account-regel-naam">{t.naam}</span>
-              <span className="account-regel-sub">{rol ? ROL_TEKST[rol] : 'Superadmin'}{magBeheren ? ' ›' : ''}</span>
-            </button>
+            <div key={t.id} className={`account-team ${actief ? 'actief' : ''}`}>
+              <button className="account-team-kies" onClick={() => { kiesTeam(t.id); tel('team-gekozen') }} aria-pressed={actief}>
+                <span className="account-team-vink" aria-hidden="true">{actief ? '✓' : ''}</span>
+                <span className="account-regel-tekst">
+                  <span className="account-regel-naam">{t.naam}</span>
+                  <span className="account-regel-sub">{rol ? ROL_TEKST[rol] : 'Superadmin'}</span>
+                </span>
+              </button>
+              {magBeheren && <button className="account-team-beheer" onClick={() => openTeam(t.id)}>Leden</button>}
+            </div>
           )
         })}
+        {teams.length > 0 && (
+          <button className={`account-team-kies los ${actiefTeamId === null ? 'actief' : ''}`} onClick={() => { kiesTeam(null); tel('zonder-team') }} aria-pressed={actiefTeamId === null}>
+            <span className="account-team-vink" aria-hidden="true">{actiefTeamId === null ? '✓' : ''}</span>
+            <span className="account-regel-tekst">
+              <span className="account-regel-naam">Zonder team</span>
+              <span className="account-regel-sub">alleen op deze telefoon</span>
+            </span>
+          </button>
+        )}
       </div>
+      <SyncRegel />
 
       {gebruiker.superadmin && (
         <form className="account-rij" onSubmit={e => { e.preventDefault(); if (nieuwTeam.trim()) maakTeam() }}>

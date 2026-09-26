@@ -10,7 +10,7 @@ import './Historie.css'
 const UITSLAG_TEKST = { W: 'gewonnen', G: 'gelijk', V: 'verloren' }
 
 export default function Historie() {
-  const { spelers, clubs, wedstrijden, wijzigWedstrijd, verwijderWedstrijd, hernoemClub, verwijderClub } = useHockey()
+  const { spelers, clubs, wedstrijden, wijzigWedstrijd, verwijderWedstrijd, hernoemClub, verwijderClub, magBewerken } = useHockey()
   const [open, setOpen] = useState<GespeeldeWedstrijd | null>(null)
   const [wijzig, setWijzig] = useState<GespeeldeWedstrijd | null>(null)
   const [weg, setWeg] = useState<GespeeldeWedstrijd | null>(null)
@@ -77,13 +77,13 @@ export default function Historie() {
       {tegenstanders.length > 0 && (
         <section>
           <h2 className="section-title">Tegenstanders</h2>
-          <p className="historie-uitleg">Tik op een club om de naam te wijzigen of te verwijderen.</p>
+          {magBewerken && <p className="historie-uitleg">Tik op een club om de naam te wijzigen of te verwijderen.</p>}
           <div className="historie-lijst">
             {tegenstanders.map(t => (
               <button
                 key={t.clubId}
                 className="historie-regel wedstrijd-regel"
-                disabled={!t.bestaat}
+                disabled={!t.bestaat || !magBewerken}
                 onClick={() => { setClub({ id: t.clubId, naam: t.naam }); setNieuweNaam(t.naam) }}
               >
                 <span className="regel-tekst">
@@ -110,8 +110,8 @@ export default function Historie() {
               <p className="detail-regel">{open.spelers.length} speelsters · {open.opstelling}</p>
             </div>
             <div className="modal-actions detail-knoppen">
-              <button className="btn btn-gevaar" onClick={() => { setWeg(open); setOpen(null) }}>Verwijderen</button>
-              <button className="btn btn-secondary" onClick={() => { setWijzig(open); setOpen(null) }}>Wijzigen</button>
+              {magBewerken && <button className="btn btn-gevaar" onClick={() => { setWeg(open); setOpen(null) }}>Verwijderen</button>}
+              {magBewerken && <button className="btn btn-secondary" onClick={() => { setWijzig(open); setOpen(null) }}>Wijzigen</button>}
               <button className="btn btn-primary" onClick={() => setOpen(null)}>Sluiten</button>
             </div>
           </div>

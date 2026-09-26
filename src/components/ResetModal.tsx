@@ -4,11 +4,12 @@ interface ResetModalProps {
   titel: string
   regels: { icoon: string; tekst: string }[]
   bevestig: string
+  annuleer?: string
   onConfirm: () => void
   onCancel: () => void
 }
 
-export default function ResetModal({ titel, regels, bevestig, onConfirm, onCancel }: ResetModalProps) {
+export default function ResetModal({ titel, regels, bevestig, annuleer = 'Annuleren', onConfirm, onCancel }: ResetModalProps) {
   return (
     <div className="reset-modal-overlay">
       <div className="reset-modal">
@@ -25,7 +26,7 @@ export default function ResetModal({ titel, regels, bevestig, onConfirm, onCance
 
         <div className="reset-buttons">
           <button className="btn btn-cancel" onClick={onCancel}>
-            Annuleren
+            {annuleer}
           </button>
           <button className="btn btn-confirm" onClick={onConfirm}>
             {bevestig}

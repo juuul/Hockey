@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { HockeyProvider } from './context/HockeyContext'
-import { AccountProvider } from './context/AccountContext'
+import { AccountProvider, useAccount } from './context/AccountContext'
+import { useHockey } from './context/HockeyContext'
+import ResetModal from './components/ResetModal'
 import Account, { AccountStart } from './screens/Account'
 import Dashboard from './screens/Dashboard'
 import Players from './screens/Players'
@@ -57,16 +59,48 @@ function AppContent() {
       </div>
       <Verversen scrollVak={scrollVak} />
       {account && <Account start={account.start} onClose={() => setAccount(null)} />}
+      <OvernemenVraag />
     </div>
+  )
+}
+
+// Eerste keer in een leeg team: meenemen wat op deze telefoon staat?
+function OvernemenVraag() {
+  const { overnemenVraag, overnemen } = useHockey()
+  const { actiefTeam } = useAccount()
+  if (!overnemenVraag) return null
+  const { spelers, clubs, wedstrijden } = overnemenVraag
+  return (
+    <ResetModal
+      titel={`Gegevens naar ${actiefTeam?.naam ?? 'het team'}?`}
+      regels={[
+        { icoon: '👥', tekst: `${spelers} spelers met voorkeuren` },
+        { icoon: '🏟', tekst: `${clubs} clubs` },
+        { icoon: '📊', tekst: `${wedstrijden} wedstrijden` },
+        { icoon: '📱', tekst: 'Wat nu op deze telefoon staat, komt in het team' },
+      ]}
+      bevestig="Ja, meenemen"
+      annuleer="Nee, leeg beginnen"
+      onConfirm={() => overnemen(true)}
+      onCancel={() => overnemen(false)}
+    />
+  )
+}
+
+// Per team een eigen set gegevens: bij een ander team begint de app-state opnieuw (key)
+function MetTeam() {
+  const { actiefTeamId, magBewerken } = useAccount()
+  return (
+    <HockeyProvider key={actiefTeamId ?? 'lokaal'} teamId={actiefTeamId} magBewerken={magBewerken}>
+      <AppContent />
+    </HockeyProvider>
   )
 }
 
 export default function App() {
   return (
     <AccountProvider>
-      <HockeyProvider>
-        <AppContent />
-      </HockeyProvider>
+      <MetTeam />
     </AccountProvider>
   )
 }

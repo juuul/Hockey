@@ -6,7 +6,7 @@ import './Positions.css'
 const KEUZE_NAAM = ['1e keuze', '2e keuze']
 
 export default function Positions() {
-  const { spelers, vastePosities, setVastePositie, opstelling } = useHockey()
+  const { spelers, vastePosities, setVastePositie, opstelling, magBewerken } = useHockey()
   const fieldPlayers = spelers.filter(s => !s.isKeeper)
 
   const handleSetPosition = (spelerId: string, keuze: number, positie: Position | null) => {
@@ -32,6 +32,7 @@ export default function Positions() {
                       {waarde ? `${keuze + 1}. ${POSITIE_LABEL[waarde]}` : KEUZE_NAAM[keuze]}
                     </span>
                     <select
+                      disabled={!magBewerken}
                       className="keuze-select"
                       aria-label={`${KEUZE_NAAM[keuze]} voor ${player.naam}`}
                       value={waarde}

@@ -1,6 +1,6 @@
 # Hockey Wissel-app
 
-Web-app om langs het veld (op een telefoon) de opstelling, wissels, score en tijd bij te houden voor een meidenteam. De wedstrijddata staat (nog) per toestel in localStorage; accounts, teams en rollen staan op een eigen PocketBase-server (zie **Server**).
+Web-app om langs het veld (op een telefoon) de opstelling, wissels, score en tijd bij te houden voor een meidenteam. Zonder team staat alles alleen op de telefoon (localStorage). Ingelogd met een team worden spelers (naam + voorkeuren), clubs en afgesloten wedstrijden gedeeld via een eigen PocketBase-server (zie **Server**); de lopende wedstrijd (opstelling, wissels, score, timer, aanwezigheid) is nog per toestel.
 
 - Live: https://juliaan.eu/hockey/ (branch `main`)
 - Test: https://juliaan.eu/hockey/test/ (branch `test`)
@@ -60,6 +60,9 @@ Keeper: Julia Arnold. Veld: Lizzy Best, Fee Daan, Sarah Eerdmans, Isa Flierman, 
 - Inloggen met e-mail + wachtwoord; **Wachtwoord vergeten** mailt een link `#wachtwoord=<token>` naar de app. Vrij aanmelden kan niet: alleen via een uitnodiging (`#uitnodiging=<token>`, 7 dagen geldig, eenmalig).
 - Rollen per team: **beheerder** (alles in het eigen team: bijhouden, spelers/clubs/wedstrijden ook verwijderen, leden uitnodigen, rollen wijzigen, ook andere beheerders aanwijzen en weghalen) en **kijker** (alleen meekijken). Er is geen aparte bewerker-rol meer (samengevoegd met beheerder). **Superadmin** (alleen de eigenaar; vlag `superadmin` op de gebruiker, alleen via het PocketBase-beheerscherm) maakt en verwijdert teams en mag in elk team alles.
 - De app leest links uit de mail uit `location.hash` en haalt het `#` daarna weg.
+- **Werken met**: in het accountscherm kies je het actieve team (✓) of "Zonder team". Bij precies één team gaat dat vanzelf. Per team een eigen opslag (`HockeyProvider key={teamId}`). De eerste keer in een leeg team vraagt de app of wat op de telefoon staat mee moet (met nieuwe id's, `nieuweIds`).
+- **Synchroniseren** (`src/sync.ts` + `src/context/useTeamSync.ts`): offline eerst. Per record drie standen: lokaal, basis (laatste serverstand, bewaard) en server. Lokaal gewijzigd → versturen; anders serverstand overnemen; door de server geweigerd (bv. kijker) → serverstand terug. Triggers: lokale wijziging (0,8 s), realtime (subscribe), online/terug naar de app, elke 60 s. Id's maakt de app zelf (`pbId`, 15 tekens a-z0-9).
+- **Kijkers** (`magBewerken` false): geen speler toevoegen/verwijderen, geen voorkeuren, geen wedstrijd afsluiten of historie wijzigen. Status staat onder "Werken met" en als ⏳/⚠ op de accountknop.
 
 ## Mobiel ontwerp (verplicht)
 Bediend op een telefoon van ~10 cm diagonaal (~360px breed):
@@ -90,7 +93,7 @@ interface Wissel { id: string; tijdstip: Date; inSpeler: string; uitSpeler: stri
 ```
 
 ### Opslag (localStorage)
-Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein, dus gescheiden): `spelers`, `wisselingen`, `vaste_posities` (per speler `[1e, 2e]`), `score`, `doelpunten` (scorer-id's of null), `opstelling`, `timer`, `clubs`, `wedstrijd` (lopende: datum/clubId/thuis), `wedstrijden` (afgesloten, zie `GespeeldeWedstrijd`). Bij nieuwe velden altijd migreren vanuit oude opgeslagen data (zie bestaande voorbeelden in de context). Opslag is per toestel/browser: andere telefoons zien andere data.
+Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein, dus gescheiden); met een actief team `hockey[_test]_t_<teamId>_<naam>` (plus `basis` en `overnemen_gevraagd`). Los daarvan: `auth`, `teams`, `actief_team`. Gegevens: `spelers`, `wisselingen`, `vaste_posities` (per speler `[1e, 2e]`), `score`, `doelpunten` (scorer-id's of null), `opstelling`, `timer`, `clubs`, `wedstrijd` (lopende: datum/clubId/thuis), `wedstrijden` (afgesloten, zie `GespeeldeWedstrijd`). Bij nieuwe velden altijd migreren vanuit oude opgeslagen data (zie bestaande voorbeelden in de context). Opslag is per toestel/browser: andere telefoons zien andere data.
 
 ## Server (PocketBase)
 - Map `server/`: `Dockerfile` + `docker-compose.yml` (container `hockey-pocketbase`, alleen `127.0.0.1:8090`), `pb_migrations/` (collecties + rechten), `pb_hooks/` (uitnodigingen mailen/aannemen). Data in `server/pb_data/` (niet in git).

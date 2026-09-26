@@ -12,7 +12,7 @@ import { sorteerWissels, veldKleuren } from '../opstelling'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling, allesResetten, clubs, wedstrijd, zetWedstrijd, wedstrijdAfsluiten } = useHockey()
+  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling, allesResetten, clubs, wedstrijd, zetWedstrijd, wedstrijdAfsluiten, magBewerken } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
@@ -140,11 +140,11 @@ export default function Dashboard() {
     )}
 
     <div className="dashboard-knoppen">
-      <button className="wedstrijd-kaart" onClick={() => setWedstrijdVraag('gegevens')}>
+      <button className="wedstrijd-kaart" onClick={() => setWedstrijdVraag('gegevens')} disabled={!magBewerken}>
         <span className="wedstrijd-kaart-club">{tegenstander ? `Tegen ${tegenstander}` : 'Kies tegenstander'}</span>
         <span className="wedstrijd-kaart-info">{wedstrijd.thuis ? 'Thuis' : 'Uit'} · {wedstrijd.datum ? datumTekst(wedstrijd.datum) : 'vandaag'}</span>
       </button>
-      <button className="btn btn-primary" onClick={() => setWedstrijdVraag('afsluiten')}>Wedstrijd afsluiten</button>
+      {magBewerken && <button className="btn btn-primary" onClick={() => setWedstrijdVraag('afsluiten')}>Wedstrijd afsluiten</button>}
       <button className="btn btn-gevaar" onClick={() => setVraag('alles')}>Alles resetten</button>
       {doelpunten.length > 0 && (
         <div className="doelpunten">

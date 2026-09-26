@@ -9,8 +9,9 @@ import './Players.css'
 import './Account.css'
 
 export default function Players({ openAccount }: { openAccount: () => void }) {
-  const { gebruiker, teams } = useAccount()
-  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, opstelling, kiesOpstelling } = useHockey()
+  const { gebruiker, actiefTeam } = useAccount()
+  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, opstelling, kiesOpstelling, magBewerken, sync } = useHockey()
+  const syncTeken = sync && (sync.offline || sync.fout) ? ' ⚠' : sync && sync.wachtend ? ' ⏳' : ''
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
@@ -47,7 +48,7 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
       <button className="account-knop" onClick={openAccount}>
         <span aria-hidden="true">👤</span>
         <span className="account-knop-tekst">
-          {gebruiker ? `${gebruiker.name || gebruiker.email}${teams.length === 1 ? ` · ${teams[0].naam}` : ''}` : 'Inloggen'}
+          {gebruiker ? `${actiefTeam ? actiefTeam.naam : 'Zonder team'} · ${gebruiker.name || gebruiker.email}${syncTeken}` : 'Inloggen'}
         </span>
         <span aria-hidden="true">›</span>
       </button>
@@ -80,7 +81,7 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
 
       <div className="section-header">
         <div className="section-title">Wie doet mee?</div>
-        <button className="btn-icon" onClick={() => setShowAddModal(true)}>+ Speler</button>
+        {magBewerken && <button className="btn-icon" onClick={() => setShowAddModal(true)}>+ Speler</button>}
       </div>
       <p className="players-uitleg">Tik op een speler om aan of af te melden. Wie niet meedoet, komt niet in de opstelling en niet bij de wissels.</p>
 
@@ -106,13 +107,13 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
               </span>
               <span className={`player-toggle ${player.meedoen ? 'on' : ''}`} aria-hidden="true" />
             </button>
-            <button
+            {magBewerken && <button
               className="delete-btn"
               onClick={() => handleDelete(player.id, player.naam)}
               aria-label={`${player.naam} verwijderen`}
             >
               ✕
-            </button>
+            </button>}
           </div>
         ))}
       </div>

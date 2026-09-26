@@ -1,11 +1,5 @@
 import { Club, GespeeldeWedstrijd, Player } from './types'
 
-// crypto.randomUUID bestaat alleen op https/localhost; de dev-server draait op http via het LAN
-export const nieuwId = (): string =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-
 export function vandaag(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`

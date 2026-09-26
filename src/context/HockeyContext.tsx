@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Club, GespeeldeWedstrijd, OpstellingNaam, OPSTELLINGEN_PER_SPELVORM, Player, Position, Spelvorm, spelvormVan, veldPosities, Wissel, WedstrijdInfo } from '../types'
 import { nieuweOpstelling as lootOpstelling, resetTellers, stempelInkomers, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling, pasOpstellingAan } from '../opstelling'
-import { nieuwId, vandaag, vindClub } from '../historie'
+import { vandaag, vindClub } from '../historie'
+import { lees, OPSLAG, schrijf, teamOpslag } from '../opslag'
+import { Alles, Lokaal, naarRecords, nieuweIds, pbId, spelersToepassen, voorkeurenUit } from '../sync'
+import { SyncStatus, useTeamSync } from './useTeamSync'
 
 // Starttijdstip + opgebouwde tijd i.p.v. een teller: zo klopt de tijd ook na verversen of een vergrendeld scherm
 export interface TimerStand {
@@ -51,22 +54,15 @@ interface HockeyContextType {
   wedstrijdAfsluiten: (info: WedstrijdInfo, tegenstander: string) => void
   wijzigWedstrijd: (id: string, info: WedstrijdInfo, tegenstander: string) => void
   verwijderWedstrijd: (id: string) => void
+  teamId: string | null
+  magBewerken: boolean
+  sync: SyncStatus | null
+  nuSynchroniseren: () => void
+  overnemenVraag: { spelers: number; clubs: number; wedstrijden: number } | null
+  overnemen: (ja: boolean) => void
 }
-
-// Test en live delen dezelfde origin (github.io), dus aparte opslag
-const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 
 const LEGE_WEDSTRIJD: WedstrijdInfo = { datum: null, clubId: null, thuis: true }
-
-// Kapotte of geblokkeerde opslag: gewoon met de standaardwaarde beginnen
-function lees<T>(sleutel: string, standaard: T): T {
-  try {
-    const saved = localStorage.getItem(`${OPSLAG}_${sleutel}`)
-    return saved ? JSON.parse(saved) : standaard
-  } catch {
-    return standaard
-  }
-}
 
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 
@@ -84,27 +80,36 @@ const INITIAL_PLAYERS: Player[] = [
   { id: '11', naam: 'Benthe', positie: 'RW', inVeld: false, meedoen: true, wisselCount: 0, isKeeper: false },
 ]
 
-export function HockeyProvider({ children }: { children: React.ReactNode }) {
+interface ProviderProps {
+  children: React.ReactNode
+  teamId?: string | null
+  magBewerken?: boolean
+}
+
+// Met een team: eigen opslag per team en synchroniseren met de server. Zonder team: alleen deze telefoon
+export function HockeyProvider({ children, teamId = null, magBewerken = true }: ProviderProps) {
+  const P = teamOpslag(teamId)
+
   const [spelers, zetSpelersRuw] = useState<Player[]>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_spelers`)
+    const saved = localStorage.getItem(`${P}_spelers`)
     // Oudere versies kenden 'meedoen' nog niet
-    return saved ? JSON.parse(saved).map((sp: Player) => ({ ...sp, meedoen: sp.meedoen ?? true })) : INITIAL_PLAYERS
+    return saved ? JSON.parse(saved).map((sp: Player) => ({ ...sp, meedoen: sp.meedoen ?? true })) : teamId ? [] : INITIAL_PLAYERS
   })
 
   const [wisselingen, setWisselingen] = useState<Wissel[]>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_wisselingen`)
+    const saved = localStorage.getItem(`${P}_wisselingen`)
     return saved ? JSON.parse(saved) : []
   })
 
   const [vastePosities, setVastePositiesState] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_vaste_posities`)
+    const saved = localStorage.getItem(`${P}_vaste_posities`)
     const parsed: Record<string, string | string[]> = saved ? JSON.parse(saved) : {}
     // Oudere versie bewaarde één positie per speler als string
     return Object.fromEntries(Object.entries(parsed).map(([id, v]) => [id, typeof v === 'string' ? [v, ''] : v]))
   })
 
   const [score, setScore] = useState<Score>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_score`)
+    const saved = localStorage.getItem(`${P}_score`)
     return saved ? JSON.parse(saved) : { wij: 0, zij: 0 }
   })
 
@@ -112,27 +117,27 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
   // Scorers van onze doelpunten, in volgorde; null = onbekend
   const [doelpunten, setDoelpunten] = useState<(string | null)[]>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_doelpunten`)
+    const saved = localStorage.getItem(`${P}_doelpunten`)
     return saved ? JSON.parse(saved) : []
   })
 
   const [opstelling, setOpstelling] = useState<OpstellingNaam>(() => {
-    const saved = localStorage.getItem(`${OPSLAG}_opstelling`)
+    const saved = localStorage.getItem(`${P}_opstelling`)
     if (saved) return JSON.parse(saved)
     // Vorige versie bewaarde alleen de spelvorm (9 of 6)
-    const oudeSpelvorm = localStorage.getItem(`${OPSLAG}_spelvorm`)
+    const oudeSpelvorm = localStorage.getItem(`${P}_spelvorm`)
     return OPSTELLINGEN_PER_SPELVORM[oudeSpelvorm ? (JSON.parse(oudeSpelvorm) as Spelvorm) : 9][0]
   })
   const spelvorm = spelvormVan(opstelling)
   const posities = veldPosities(opstelling)
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_opstelling`, JSON.stringify(opstelling))
+    localStorage.setItem(`${P}_opstelling`, JSON.stringify(opstelling))
   }, [opstelling])
 
   const [timer, setTimer] = useState<TimerStand>(() => {
     try {
-      const saved = localStorage.getItem(`${OPSLAG}_timer`)
+      const saved = localStorage.getItem(`${P}_timer`)
       if (saved) return JSON.parse(saved)
     } catch {
       // kapotte of geblokkeerde opslag: begin gewoon op 0
@@ -141,27 +146,27 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_timer`, JSON.stringify(timer))
+    localStorage.setItem(`${P}_timer`, JSON.stringify(timer))
   }, [timer])
 
   const startTimer = () => setTimer({ ...timer, gestartOp: Date.now() })
   const pauzeTimer = () => setTimer({ gestartOp: null, opgebouwd: timer.opgebouwd + (timer.gestartOp !== null ? Date.now() - timer.gestartOp : 0) })
   const stopTimer = () => setTimer({ gestartOp: null, opgebouwd: 0 })
 
-  const [clubs, setClubs] = useState<Club[]>(() => lees('clubs', []))
-  const [wedstrijd, zetWedstrijd] = useState<WedstrijdInfo>(() => lees('wedstrijd', LEGE_WEDSTRIJD))
-  const [wedstrijden, setWedstrijden] = useState<GespeeldeWedstrijd[]>(() => lees('wedstrijden', []))
+  const [clubs, setClubs] = useState<Club[]>(() => lees(P, 'clubs', []))
+  const [wedstrijd, zetWedstrijd] = useState<WedstrijdInfo>(() => lees(P, 'wedstrijd', LEGE_WEDSTRIJD))
+  const [wedstrijden, setWedstrijden] = useState<GespeeldeWedstrijd[]>(() => lees(P, 'wedstrijden', []))
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_clubs`, JSON.stringify(clubs))
+    localStorage.setItem(`${P}_clubs`, JSON.stringify(clubs))
   }, [clubs])
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_wedstrijd`, JSON.stringify(wedstrijd))
+    localStorage.setItem(`${P}_wedstrijd`, JSON.stringify(wedstrijd))
   }, [wedstrijd])
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_wedstrijden`, JSON.stringify(wedstrijden))
+    localStorage.setItem(`${P}_wedstrijden`, JSON.stringify(wedstrijden))
   }, [wedstrijden])
 
   const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score; doelpunten: (string | null)[] }[]>([])
@@ -181,30 +186,30 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_spelers`, JSON.stringify(spelers))
+    localStorage.setItem(`${P}_spelers`, JSON.stringify(spelers))
   }, [spelers])
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_wisselingen`, JSON.stringify(wisselingen))
+    localStorage.setItem(`${P}_wisselingen`, JSON.stringify(wisselingen))
   }, [wisselingen])
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_score`, JSON.stringify(score))
+    localStorage.setItem(`${P}_score`, JSON.stringify(score))
   }, [score])
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_doelpunten`, JSON.stringify(doelpunten))
+    localStorage.setItem(`${P}_doelpunten`, JSON.stringify(doelpunten))
   }, [doelpunten])
 
   useEffect(() => {
-    localStorage.setItem(`${OPSLAG}_vaste_posities`, JSON.stringify(vastePosities))
+    localStorage.setItem(`${P}_vaste_posities`, JSON.stringify(vastePosities))
   }, [vastePosities])
 
   const addSpeler = (naam: string) => {
     remember()
-    const newId = Math.max(...spelers.map(s => parseInt(s.id)), 0) + 1
+    const newId = pbId()
     const newSpeler: Player = {
-      id: newId.toString(),
+      id: newId,
       naam,
       positie: 'LW',
       inVeld: false,
@@ -297,7 +302,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   const clubToevoegen = (naam: string) => {
     const bestaand = vindClub(clubs, naam)
     if (bestaand) return bestaand.id
-    const club: Club = { id: nieuwId(), naam: naam.trim(), laatstGebruikt: Date.now() }
+    const club: Club = { id: pbId(), naam: naam.trim(), laatstGebruikt: Date.now() }
     setClubs(c => [...c, club])
     return club.id
   }
@@ -317,7 +322,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     if (!info.clubId) return
     const clubId = info.clubId
     const gespeeld: GespeeldeWedstrijd = {
-      id: nieuwId(),
+      id: pbId(),
       datum: info.datum ?? vandaag(),
       clubId,
       tegenstander,
@@ -369,8 +374,59 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   }
 
 
+  // ── Synchroniseren met het team op de server ──
+  const records = naarRecords(spelers, vastePosities, clubs, wedstrijden)
+  const toepassen = (nieuw: Alles) => {
+    const oud = naarRecords(spelers, vastePosities, clubs, wedstrijden)
+    if (JSON.stringify(nieuw.spelers) !== JSON.stringify(oud.spelers)) {
+      zetSpelersRuw(huidig => spelersToepassen(huidig, nieuw.spelers, haalUitVeld))
+      setVastePositiesState(voorkeurenUit(nieuw.spelers))
+    }
+    if (JSON.stringify(nieuw.clubs) !== JSON.stringify(oud.clubs)) setClubs(Object.values(nieuw.clubs) as unknown as Club[])
+    if (JSON.stringify(nieuw.wedstrijden) !== JSON.stringify(oud.wedstrijden)) setWedstrijden(Object.values(nieuw.wedstrijden) as unknown as GespeeldeWedstrijd[])
+  }
+  const { status: sync, nuSynchroniseren } = useTeamSync({ teamId, prefix: P, records, toepassen })
+
+  // Eerste keer in een leeg team: aanbieden om wat op deze telefoon staat mee te nemen
+  const [gevraagd, setGevraagd] = useState(() => lees(P, 'overnemen_gevraagd', false))
+  const lokaalAantal = teamId && !gevraagd ? {
+    spelers: lees<Player[]>(OPSLAG, 'spelers', []).length,
+    clubs: lees<Club[]>(OPSLAG, 'clubs', []).length,
+    wedstrijden: lees<GespeeldeWedstrijd[]>(OPSLAG, 'wedstrijden', []).length,
+  } : null
+  const overnemenVraag = teamId && !gevraagd && sync.geladen && sync.serverLeeg && sync.wachtend === 0
+    && spelers.length === 0 && clubs.length === 0 && wedstrijden.length === 0
+    && lokaalAantal && lokaalAantal.spelers + lokaalAantal.clubs + lokaalAantal.wedstrijden > 0
+    ? lokaalAantal : null
+
+  const overnemen = (ja: boolean) => {
+    schrijf(P, 'overnemen_gevraagd', true)
+    setGevraagd(true)
+    if (!ja) return
+    const d: Lokaal = nieuweIds({
+      spelers: lees<Player[]>(OPSLAG, 'spelers', []).map(sp => ({ ...sp, meedoen: sp.meedoen ?? true })),
+      wisselingen: lees(OPSLAG, 'wisselingen', []),
+      vastePosities: lees(OPSLAG, 'vaste_posities', {}),
+      doelpunten: lees(OPSLAG, 'doelpunten', []),
+      clubs: lees(OPSLAG, 'clubs', []),
+      wedstrijd: lees(OPSLAG, 'wedstrijd', LEGE_WEDSTRIJD),
+      wedstrijden: lees(OPSLAG, 'wedstrijden', []),
+    })
+    zetSpelersRuw(d.spelers)
+    setWisselingen(d.wisselingen)
+    setVastePositiesState(d.vastePosities)
+    setDoelpunten(d.doelpunten)
+    setClubs(d.clubs)
+    zetWedstrijd(d.wedstrijd)
+    setWedstrijden(d.wedstrijden)
+    setScore(lees(OPSLAG, 'score', { wij: 0, zij: 0 }))
+    setOpstelling(lees(OPSLAG, 'opstelling', opstelling))
+    setTimer(lees(OPSLAG, 'timer', { gestartOp: null, opgebouwd: 0 }))
+    setHistory([])
+  }
+
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten, clubs, clubToevoegen, hernoemClub, verwijderClub, wedstrijd, zetWedstrijd, wedstrijden, wedstrijdAfsluiten, wijzigWedstrijd, verwijderWedstrijd }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten, clubs, clubToevoegen, hernoemClub, verwijderClub, wedstrijd, zetWedstrijd, wedstrijden, wedstrijdAfsluiten, wijzigWedstrijd, verwijderWedstrijd, teamId, magBewerken, sync: teamId ? sync : null, nuSynchroniseren, overnemenVraag, overnemen }}>
       {children}
     </HockeyContext.Provider>
   )
