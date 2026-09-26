@@ -11,6 +11,9 @@
       window.addEventListener('error', function (e) {
         var t = e.target
         if (!t || !(t.tagName === 'SCRIPT' || (t.tagName === 'LINK' && t.rel === 'stylesheet'))) return
+        // Alleen onze eigen bestanden; een geblokkeerd extern script (bv. de teller) mag geen herlaad-lus geven
+        var bron = t.src || t.href || ''
+        if (bron.indexOf(location.origin) !== 0 || bron.indexOf('/assets/') < 0) return
         try {
           if (sessionStorage.getItem('hockey_herladen')) return
           sessionStorage.setItem('hockey_herladen', '1')
