@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
 import { useAccount } from '../context/AccountContext'
 import { OPSTELLINGEN, Position, POSITIE_LABEL } from '../types'
@@ -126,7 +126,14 @@ export default function Dashboard({ openAccount }: { openAccount: () => void }) 
       </div>
 
       <div className="field-container">
-        <div className="field">
+        {/* Rondjes schalen mee met de breedste rij en het aantal rijen (11 spelers: rijen van 4 en een laatste man) */}
+        <div
+          className="field"
+          style={{
+            '--breedste': Math.max(3, ...OPSTELLINGEN[opstelling].map(r => r.length)),
+            '--rijen': Math.max(4, OPSTELLINGEN[opstelling].length + 1),
+          } as React.CSSProperties}
+        >
           {OPSTELLINGEN[opstelling].map(rij => (
             <div key={rij.join()} className={`field-row rij-${rij.length}`}>{rij.map(slot)}</div>
           ))}

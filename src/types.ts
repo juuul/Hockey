@@ -1,4 +1,4 @@
-export type Position = 'LW' | 'CV' | 'RW' | 'LM' | 'CM' | 'RM' | 'LBM' | 'CBM' | 'RBM' | 'K';
+export type Position = 'LW' | 'CV' | 'RW' | 'LM' | 'LCM' | 'CM' | 'RCM' | 'RM' | 'LBM' | 'LCA' | 'CBM' | 'RCA' | 'RBM' | 'LIB' | 'K';
 
 export interface Player {
   id: string;
@@ -24,24 +24,33 @@ export const POSITIE_LABEL: Record<Position, string> = {
   CV: 'centraal voor',
   RW: 'rechts voor',
   LM: 'links midden',
+  LCM: 'links binnen',
   CM: 'midden',
+  RCM: 'rechts binnen',
   RM: 'rechts midden',
   LBM: 'links achter',
+  LCA: 'links centraal',
   CBM: 'centraal achter',
+  RCA: 'rechts centraal',
   RBM: 'rechts achter',
+  LIB: 'laatste man',
   K: 'keeper',
 };
 
 // Van voor naar achter; ook de sorteervolgorde voor elke opstelling
-export const VELD_VOLGORDE: Position[] = ['LW', 'CV', 'RW', 'LM', 'CM', 'RM', 'LBM', 'CBM', 'RBM'];
+export const VELD_VOLGORDE: Position[] = ['LW', 'CV', 'RW', 'LM', 'LCM', 'CM', 'RCM', 'RM', 'LBM', 'LCA', 'CBM', 'RCA', 'RBM', 'LIB'];
 
 // Totaal aantal spelers incl. keeper
-export type Spelvorm = 9 | 6;
+export type Spelvorm = 11 | 9 | 6;
 
-export type OpstellingNaam = '2-3-3' | '3-3-2' | '3-2-3' | '2-1-2' | '2-2-1' | '1-2-2';
+export type OpstellingNaam = '3-3-3-1' | '4-3-3' | '3-4-3' | '2-3-3' | '3-3-2' | '3-2-3' | '2-1-2' | '2-2-1' | '1-2-2';
 
 // Rijen van voor naar achter (keeper staat er altijd los onder)
 export const OPSTELLINGEN: Record<OpstellingNaam, Position[][]> = {
+  // 11 spelers: de naam telt van achter naar voor zoals in het hockey gebruikelijk (3-3-3-1 = libero achteraan)
+  '3-3-3-1': [['LW', 'CV', 'RW'], ['LM', 'CM', 'RM'], ['LBM', 'CBM', 'RBM'], ['LIB']],
+  '4-3-3': [['LW', 'CV', 'RW'], ['LM', 'CM', 'RM'], ['LBM', 'LCA', 'RCA', 'RBM']],
+  '3-4-3': [['LW', 'CV', 'RW'], ['LM', 'LCM', 'RCM', 'RM'], ['LBM', 'CBM', 'RBM']],
   '2-3-3': [['LW', 'RW'], ['LM', 'CM', 'RM'], ['LBM', 'CBM', 'RBM']],
   '3-3-2': [['LW', 'CV', 'RW'], ['LM', 'CM', 'RM'], ['LBM', 'RBM']],
   '3-2-3': [['LW', 'CV', 'RW'], ['LM', 'RM'], ['LBM', 'CBM', 'RBM']],
@@ -52,12 +61,13 @@ export const OPSTELLINGEN: Record<OpstellingNaam, Position[][]> = {
 
 // De eerste is de standaard bij die spelvorm
 export const OPSTELLINGEN_PER_SPELVORM: Record<Spelvorm, OpstellingNaam[]> = {
+  11: ['3-3-3-1', '4-3-3', '3-4-3'],
   9: ['2-3-3', '3-3-2', '3-2-3'],
   6: ['2-1-2', '2-2-1', '1-2-2'],
 };
 
 export const spelvormVan = (opstelling: OpstellingNaam): Spelvorm =>
-  OPSTELLINGEN_PER_SPELVORM[6].includes(opstelling) ? 6 : 9;
+  OPSTELLINGEN_PER_SPELVORM[11].includes(opstelling) ? 11 : OPSTELLINGEN_PER_SPELVORM[6].includes(opstelling) ? 6 : 9;
 
 export const veldPosities = (opstelling: OpstellingNaam): Position[] => OPSTELLINGEN[opstelling].flat();
 

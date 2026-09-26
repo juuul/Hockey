@@ -52,8 +52,9 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
         </span>
         <span aria-hidden="true">›</span>
       </button>
-      <div className="spelvorm" role="radiogroup" aria-label="Spelvorm">
-        {([9, 6] as const).map(v => (
+      <div className="spelvorm-kop">Aantal spelers (met keeper)</div>
+      <div className="spelvorm" role="radiogroup" aria-label="Aantal spelers">
+        {([11, 9, 6] as const).map(v => (
           <button
             key={v}
             role="radio"
@@ -62,7 +63,7 @@ export default function Players({ openAccount }: { openAccount: () => void }) {
             onClick={() => { if (v !== spelvorm) { kiesOpstelling(OPSTELLINGEN_PER_SPELVORM[v][0]); tel(`spelvorm-${v}`) } }}
             disabled={!magBewerken}
           >
-            {v} spelers
+            {v}
           </button>
         ))}
       </div>

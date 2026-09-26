@@ -244,6 +244,7 @@ button.account-regel:disabled {
 }
 
 .account-knop {
+  font-size: var(--base-readable-size);
   display: flex;
   align-items: center;
   gap: 10px;

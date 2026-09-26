@@ -168,8 +168,18 @@
   padding: 0 10%;
 }
 
+/* Rij van 4 (11 spelers): krap, dus minder rand en de kleinst toegestane letter (22px) */
+.field-row.rij-4 .player-slot {
+  padding: 4px 5px;
+}
+
+.field-row.rij-4 .player-slot .name,
+.field-row.rij-4 .player-slot .count {
+  font-size: max(calc(var(--size) * 0.23), 22px);
+}
+
 .player-slot {
-  --size: min(31cqw, 24cqh, 170px);
+  --size: min(calc(93cqw / var(--breedste, 3)), calc(96cqh / var(--rijen, 4)), 170px);
   background: white;
   border: none;
   border-radius: 50%;

@@ -21,7 +21,7 @@ Web-app om langs het veld (op een telefoon) de opstelling, wissels, score en tij
    - Veld met de opstelling en de keeper eronder. Tik op een speler: **Wissel** (met wisselspeler) of **Verplaatsen** (ruilen met veldspeler of wisselspeler). Keeper: alleen verplaatsen. Lege plek (gestippeld, "+"): tik om iemand erin te zetten.
    - Eén regel wisselspelers in beeld (2 naast elkaar), zonder kopje. Meer wissels staan onder de vouw.
    - **Onder de vouw** (alleen bereikbaar door te scrollen, bewust uit het zicht): extra wissels, wedstrijdkaart (tegenstander, thuis/uit, datum; tik om te wijzigen), **Wedstrijd afsluiten**, overzicht doelpunten, knoppen **Alles resetten**, Undo, Nieuwe opstelling, Reset wissels, Score 0 – 0, en de **Timer** (Start/Pauze/Stop).
-2. **Spelers**: bovenaan de knop 👤 Inloggen/account (opent het accountscherm); spelvorm (9 of 6 spelers) en opstelling kiezen; lijst van alle spelers met schakelaar "Doet mee / Doet niet mee", doelpunten per speler (⚽ n), speler toevoegen/verwijderen. Geen veld/bank-info hier.
+2. **Spelers**: bovenaan de knop 👤 Inloggen/account (opent het accountscherm); aantal spelers (11, 9 of 6, met keeper) en opstelling kiezen; lijst van alle spelers met schakelaar "Doet mee / Doet niet mee", doelpunten per speler (⚽ n), speler toevoegen/verwijderen. Geen veld/bank-info hier.
 3. **Voorkeur**: per speler een 1e en 2e voorkeurspositie (alleen posities van de huidige opstelling). Dubbele voorkeuren mogen.
 4. **Historie**: balans (gespeeld/gewonnen/gelijk/verloren, doelpunten), topscorers over alle wedstrijden, lijst wedstrijden (tik: details, wijzigen, verwijderen), tegenstanders met resultaat (tik: hernoemen/verwijderen).
 
@@ -30,7 +30,7 @@ Tabbladen tonen een icoon; alleen het actieve tabblad toont ook zijn naam (vier 
 ### Regels
 - **Wisselteller** gaat +1 bij de speler die **uit** het veld gaat (alleen bij Wissel, niet bij Verplaatsen). De invaller neemt de positie over.
 - **Wisselspelers sorteren**: minste wissels eerst; bij gelijke stand komt wie het laatst uit het veld ging onderaan. Zelfde volgorde in de wissel-pop-up.
-- **Kleuren in het veld** (alleen informatief, blokkeert niets), op volgorde van invallen (`inVolgorde`), niet op tijd: bij 9 spelers de laatste 2 invallers rood, 2 daarvoor oranje, de rest (ook de basis) groen; bij 6 spelers 1 rood, 1 oranje. Keeper geen kleur.
+- **Kleuren in het veld** (alleen informatief, blokkeert niets), op volgorde van invallen (`inVolgorde`), niet op tijd: bij 11 en 9 spelers de laatste 2 invallers rood, 2 daarvoor oranje, de rest (ook de basis) groen; bij 6 spelers 1 rood, 1 oranje. Keeper geen kleur.
 - **Nieuwe opstelling**: eerst eerlijk loten wie begint (iedereen gelijke kans op de bank), dan per basisspeler de 1e voorkeur, daarna de 2e (beide in gelote volgorde, bij dubbele keuze wint een willekeurige), rest willekeurig. Tellers blijven staan; `inVolgorde` terug naar 0.
 - **Reset wissels**: alleen tellers — veldspelers 0, wisselspelers 1 (die staan al één keer "uit"). Opstelling en score blijven.
 - **Alles resetten**: nieuwe opstelling + reset wissels + score 0-0 en scorers weg + timer 0:00 gestopt. Spelers, aanwezigheid, voorkeuren en gekozen opstelling blijven.
@@ -44,10 +44,11 @@ Tabbladen tonen een icoon; alleen het actieve tabblad toont ook zijn naam (vier 
 - Geen meldingen (toasts) na een bevestiging. Bevestigingsvragen alleen bij resets en timer-stop.
 
 ### Opstellingen
-Posities (van voor naar achter): `LW` links voor, `CV` centraal voor, `RW` rechts voor, `LM` links midden, `CM` midden, `RM` rechts midden, `LBM` links achter, `CBM` centraal achter, `RBM` rechts achter, `K` keeper. Codes nooit in de UI tonen, alleen de Nederlandse labels (`POSITIE_LABEL`).
+Posities (van voor naar achter): `LW` links voor, `CV` centraal voor, `RW` rechts voor, `LM` links midden, `LCM` links binnen, `CM` midden, `RCM` rechts binnen, `RM` rechts midden, `LBM` links achter, `LCA` links centraal, `CBM` centraal achter, `RCA` rechts centraal, `RBM` rechts achter, `LIB` laatste man, `K` keeper. Codes nooit in de UI tonen, alleen de Nederlandse labels (`POSITIE_LABEL`).
 
 | Spelvorm | Opstellingen (eerste = standaard) |
 |---|---|
+| 11 spelers (10 + keeper) | 3-3-3-1 (met laatste man), 4-3-3 (4 achter), 3-4-3 (4 midden) |
 | 9 spelers (8 + keeper) | 2-3-3, 3-3-2, 3-2-3 |
 | 6 spelers (5 + keeper) | 2-1-2, 2-2-1, 1-2-2 |
 
@@ -71,7 +72,7 @@ Bediend op een telefoon van ~10 cm diagonaal (~360px breed):
 - **Minimale lettergrootte 22px** via `--base-readable-size` in `src/index.css` (nu 24px); nergens kleiner.
 - **Aanraakdoelen minimaal 60px hoog.**
 - **Schermvullend** (`100dvh`), geen vaste breedtes/hoogtes. Het dashboard vult precies het scherm; alles wat niet vaak nodig is staat onder de vouw.
-- **Veld schaalt mee** via container units (`cqw`/`cqh`). Spelers zijn **rondjes** (gebruiker koos tegen ovalen); ze worden alleen breder als een naam niet past.
+- **Veld schaalt mee** via container units (`cqw`/`cqh`): rondje = min(93cqw / breedste rij, 96cqh / aantal rijen incl. keeper), met `--breedste` (min. 3) en `--rijen` (min. 4) op `.field`. Rijen van 4 (11 spelers) krijgen minder rand en 22px letters. Spelers zijn **rondjes** (gebruiker koos tegen ovalen); ze worden alleen breder als een naam niet past.
 - **Pop-ups**: gecentreerd, grote tekst en knoppen.
 - Test op een smal, laag scherm (360×640).
 
