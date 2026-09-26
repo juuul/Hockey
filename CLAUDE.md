@@ -10,7 +10,7 @@ Web-app om langs het veld (op een telefoon) de opstelling, wissels, score en tij
 - Werk op branch `test`. Elke wijziging: typecheck (`npx tsc --noEmit -p .`), commit, push naar `test`, wacht op de deploy en controleer de test-URL.
 - Naar `main` (live) alleen als de gebruiker dat expliciet zegt ("zet live", "zet maar door", "naar main"). Dan `git merge --ff-only test` op `main` en pushen.
 - De gebruiker is Nederlandstalig en test op de telefoon; antwoord in het Nederlands, kort.
-- Browser/touch kan hier niet getest worden: zeg dat eerlijk en laat de gebruiker het op de telefoon checken.
+- Touch/uiterlijk op de telefoon kan hier niet getest worden: zeg dat eerlijk en laat de gebruiker het op de telefoon checken. Wel kan een echte headless Chrome via Docker: `docker run --rm --network host zenika/alpine-chrome --no-sandbox --headless=new --virtual-time-budget=8000 --dump-dom <url>` (met `--host-resolver-rules="MAP gc.zgo.at 0.0.0.0"` om een geblokkeerde teller na te bootsen).
 - Logica testen op de echte code: schrijf een klein script in de scratchpad dat `src/opstelling.ts` importeert, bundel met `node_modules/.bin/esbuild <script> --bundle --platform=node` en draai het met node.
 
 ## Functionaliteit
@@ -115,4 +115,4 @@ Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein,
 - Domein `juliaan.eu` hoort bij de repo `juuul/juuul.github.io` (startpagina met knoppen naar /hockey/ en financeplannerapp.com, lokaal in `/home/metime/projects/juuul.github.io`); deze repo verschijnt daardoor op `/hockey/`. Paden zijn hoofdlettergevoelig: repo heet `hockey`.
 - DNS bij zxcs/Vimexx (A + AAAA naar GitHub Pages). De lokale resolver op deze machine cachet soms nog een oud parkeeradres; controleer live dan met `curl --resolve juliaan.eu:443:185.199.108.153 ...`.
 - GitHub Pages cachet pagina's tot 10 minuten; de gebruiker ververst door de pagina omlaag te trekken.
-- Bij elke publicatie verdwijnen de oude `assets/index-*.js/css`. Een telefoon met de oude `index.html` in de cache kreeg daardoor een leeg scherm; het inline script in `index.html` laadt dan één keer opnieuw met `?v=…` (buiten de cache), `main.tsx` ruimt dat weer op.
+- Bij elke publicatie verdwijnen de oude `assets/index-*.js/css`. Een telefoon met de oude `index.html` in de cache kreeg daardoor een leeg scherm; het inline script in `index.html` laadt dan één keer opnieuw met `?v=…` (buiten de cache), `main.tsx` ruimt dat weer op. Alleen reageren op eigen `/assets/`-bestanden: een geblokkeerde GoatCounter gaf eerst een eindeloze herlaad-lus.
