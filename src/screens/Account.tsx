@@ -351,6 +351,11 @@ function UitnodigingAannemen({ token, klaar }: { token: string; klaar: () => voi
     setBezig(false)
   }
 
+  // Na inloggen met het uitgenodigde account door naar het overzicht met teams
+  useEffect(() => {
+    if (inlogNodig && gebruiker?.email === inlogNodig) klaar()
+  }, [inlogNodig, gebruiker, klaar])
+
   if (inlogNodig) {
     return (
       <>
