@@ -1,6 +1,6 @@
 // Gedeelde functies voor de hooks (handlers draaien los van elkaar, dus alles via require)
 
-const ROL_VELD = { beheerder: "beheerders", bewerker: "bewerkers", kijker: "kijkers" }
+const ROL_VELD = { beheerder: "beheerders", kijker: "kijkers" }
 
 // Alleen links terug naar onze eigen app
 const TOEGESTAAN = [
@@ -32,7 +32,7 @@ function escape(s) {
 function stuurUitnodiging(app, inv) {
   const team = app.findRecordById("teams", inv.getString("team"))
   const link = inv.getString("terug") + "#uitnodiging=" + inv.getString("token")
-  const rolTekst = { beheerder: "beheerder", bewerker: "bewerker (mag score en wissels bijhouden)", kijker: "kijker (kijkt mee)" }[inv.getString("rol")]
+  const rolTekst = { beheerder: "beheerder (mag alles bijhouden en regelen)", kijker: "kijker (kijkt mee)" }[inv.getString("rol")]
   const meta = app.settings().meta
   const msg = new MailerMessage({
     from: { address: meta.senderAddress, name: meta.senderName },

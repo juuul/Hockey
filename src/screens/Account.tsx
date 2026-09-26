@@ -9,7 +9,7 @@ export type AccountStart = { soort: 'uitnodiging' | 'wachtwoord'; token: string 
 
 type Weergave = { soort: 'hoofd' } | { soort: 'team'; id: string } | { soort: 'uitnodiging'; token: string } | { soort: 'wachtwoord'; token: string }
 
-const ROLLEN: Rol[] = ['beheerder', 'bewerker', 'kijker']
+const ROLLEN: Rol[] = ['beheerder', 'kijker']
 
 export default function Account({ start, onClose }: { start: AccountStart; onClose: () => void }) {
   const { gebruiker } = useAccount()
@@ -154,7 +154,7 @@ function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; 
   const team = teams.find(t => t.id === id)
   const [uitnodigingen, setUitnodigingen] = useState<Uitnodiging[]>([])
   const [email, setEmail] = useState('')
-  const [rol, setRol] = useState<Rol>('bewerker')
+  const [rol, setRol] = useState<Rol>('kijker')
   const [lid, setLid] = useState<Gebruiker | null>(null)
   const [verwijderVraag, setVerwijderVraag] = useState(false)
   const [melding, setMelding] = useState<{ tekst: string; fout: boolean } | null>(null)
@@ -189,14 +189,13 @@ function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; 
     setEmail('')
   }, `Uitnodiging gemaild naar ${email.trim()}.`)
 
-  // Een beheerder mag het veld 'beheerders' niet meesturen; alleen de superadmin wijzigt beheerders
   const zetRol = (userId: string, nieuw: Rol | null) => doe(async () => {
-    const velden: Partial<Record<'beheerders' | 'bewerkers' | 'kijkers', string[]>> = {}
+    const velden: Partial<Record<'beheerders' | 'kijkers', string[]>> = {}
     for (const r of ROLLEN) {
       const veld = ROL_VELD[r]
-      const lijst = team[veld].filter(x => x !== userId)
+      const lijst = (team[veld] ?? []).filter(x => x !== userId)
       if (r === nieuw) lijst.push(userId)
-      if (lijst.length !== team[veld].length || r === nieuw) velden[veld] = lijst
+      velden[veld] = lijst
     }
     await pb.collection('teams').update(id, velden)
     tel(nieuw ? 'rol-gewijzigd' : 'lid-verwijderd')
@@ -205,7 +204,6 @@ function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; 
   })
 
   const lidRol = lid ? rolIn(team, lid.id) : null
-  const mogelijkeRollen = ROLLEN.filter(r => sa || r !== 'beheerder')
 
   return (
     <div className="account-form">
@@ -220,7 +218,7 @@ function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; 
             key={g.id}
             className="account-regel"
             onClick={() => setLid(g)}
-            disabled={g.id === gebruiker.id || (r === 'beheerder' && !sa)}
+            disabled={g.id === gebruiker.id}
           >
             <span className="account-regel-tekst">
               <span className="account-regel-naam">{g.name || g.email}</span>
@@ -258,7 +256,7 @@ function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; 
       <form className="account-form" onSubmit={e => { e.preventDefault(); nodigUit() }}>
         <input className="modal-input" type="email" placeholder="E-mailadres" value={email} onChange={e => setEmail(e.target.value)} />
         <div className="account-rollen" role="radiogroup" aria-label="Rol">
-          {mogelijkeRollen.map(r => (
+          {ROLLEN.map(r => (
             <button key={r} type="button" role="radio" aria-checked={rol === r} className={`account-rol ${rol === r ? 'actief' : ''}`} onClick={() => setRol(r)}>
               <span className="account-rol-naam">{ROL_TEKST[r]}</span>
               <span className="account-rol-uitleg">{ROL_UITLEG[r]}</span>
@@ -276,7 +274,7 @@ function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; 
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-title">{lid.name || lid.email}</div>
             <div className="modal-options">
-              {mogelijkeRollen.map(r => (
+              {ROLLEN.map(r => (
                 <button key={r} className={`modal-option ${lidRol === r ? 'selected' : ''}`} disabled={bezig} onClick={() => zetRol(lid.id, r)}>
                   <span className="modal-option-name">{ROL_TEKST[r]}</span>
                 </button>

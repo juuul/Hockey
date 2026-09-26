@@ -19,7 +19,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
   const teamsLaden = useCallback(async () => {
     if (!pb.authStore.isValid) return setTeams([])
-    setTeams(await pb.collection('teams').getFullList<Team>({ sort: 'naam', expand: 'beheerders,bewerkers,kijkers' }))
+    setTeams(await pb.collection('teams').getFullList<Team>({ sort: 'naam', expand: 'beheerders,kijkers' }))
   }, [])
 
   // Bij het opstarten de inlog verversen (en uitloggen als het account niet meer bestaat)

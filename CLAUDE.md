@@ -58,7 +58,7 @@ Keeper: Julia Arnold. Veld: Lizzy Best, Fee Daan, Sarah Eerdmans, Isa Flierman, 
 
 ### Accounts (accountscherm, `src/screens/Account.tsx`)
 - Inloggen met e-mail + wachtwoord; **Wachtwoord vergeten** mailt een link `#wachtwoord=<token>` naar de app. Vrij aanmelden kan niet: alleen via een uitnodiging (`#uitnodiging=<token>`, 7 dagen geldig, eenmalig).
-- Rollen per team: **beheerder** (alles in het team, behalve beheerders aanwijzen), **bewerker**, **kijker**. **Superadmin** (alleen de eigenaar; vlag `superadmin` op de gebruiker, alleen via het PocketBase-beheerscherm) maakt teams en wijst beheerders aan.
+- Rollen per team: **beheerder** (alles in het eigen team: bijhouden, spelers/clubs/wedstrijden ook verwijderen, leden uitnodigen, rollen wijzigen, ook andere beheerders aanwijzen en weghalen) en **kijker** (alleen meekijken). Er is geen aparte bewerker-rol meer (samengevoegd met beheerder). **Superadmin** (alleen de eigenaar; vlag `superadmin` op de gebruiker, alleen via het PocketBase-beheerscherm) maakt en verwijdert teams en mag in elk team alles.
 - De app leest links uit de mail uit `location.hash` en haalt het `#` daarna weg.
 
 ## Mobiel ontwerp (verplicht)
@@ -97,7 +97,7 @@ Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein,
 - Openbaar alleen `/api` via **Tailscale Funnel** (adres in `src/server.ts`, overschrijfbaar met `VITE_SERVER`). Beheerscherm `/_/` alleen via tailnet (poort 8443) of een SSH-tunnel naar `127.0.0.1:8090`.
 - Mail via Gmail SMTP met een app-wachtwoord; ingesteld in het beheerscherm, niet in git.
 - **De repo is openbaar**: geen e-mailadressen, wachtwoorden, tokens of andere persoonlijke gegevens committen.
-- **Rechten worden op de server afgedwongen** (collection rules). In PocketBase 0.40: relaties vergelijken met `veld.id ?= …` (niet `veld ?= …`), en elke regel begint met `@request.auth.id != ""` (anders telt een lege relatie als match voor bezoekers).
+- **Rechten worden op de server afgedwongen** (collection rules). In PocketBase 0.40: relaties vergelijken met `veld.id ?= …` (niet `veld ?= …`), en elke regel begint met `@request.auth.id != ""` (anders telt een lege relatie als match voor bezoekers). Twee keer dezelfde multi-relatie via één `@collection`-alias vergelijkt binnen dezelfde rij; gebruik back-relaties (`teams_via_beheerders.beheerders.id ?= …`).
 - Migraties en hooks zitten **in het image** (niet gemount): de echte server verandert pas na `cd server && docker compose up -d --build`, en dat doet de gebruiker. (Eerder waren ze gemount; PocketBase herlaadde toen vanzelf en voerde een halve migratie uit.)
 - Een migratie die al op de server gedraaid heeft **nooit aanpassen**: altijd een nieuwe migratie toevoegen.
 - Wijzigingen eerst testen op een losse container met eigen datamap in de scratchpad (poort 8099, nep-SMTP, migraties/hooks daar wél gemount), nooit op de echte data. Voor problemen met echte data: een kopie maken met sqlite `backup()` (alleen-lezen bron) en daarop testen.

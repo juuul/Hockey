@@ -6,12 +6,11 @@ const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 export const pb = new PocketBase(import.meta.env.VITE_SERVER ?? 'https://serverbot.taild1b3c5.ts.net', new LocalAuthStore(`${OPSLAG}_auth`))
 pb.autoCancellation(false)
 
-export type Rol = 'beheerder' | 'bewerker' | 'kijker'
-export const ROL_VELD: Record<Rol, 'beheerders' | 'bewerkers' | 'kijkers'> = { beheerder: 'beheerders', bewerker: 'bewerkers', kijker: 'kijkers' }
-export const ROL_TEKST: Record<Rol, string> = { beheerder: 'Beheerder', bewerker: 'Bewerker', kijker: 'Kijker' }
+export type Rol = 'beheerder' | 'kijker'
+export const ROL_VELD: Record<Rol, 'beheerders' | 'kijkers'> = { beheerder: 'beheerders', kijker: 'kijkers' }
+export const ROL_TEKST: Record<Rol, string> = { beheerder: 'Beheerder', kijker: 'Kijker' }
 export const ROL_UITLEG: Record<Rol, string> = {
-  beheerder: 'mag alles in dit team',
-  bewerker: 'mag score en wissels bijhouden',
+  beheerder: 'mag alles bijhouden en regelen',
   kijker: 'kijkt alleen mee',
 }
 
@@ -19,14 +18,13 @@ export interface Gebruiker extends RecordModel { email: string; name: string; su
 export interface Team extends RecordModel {
   naam: string
   beheerders: string[]
-  bewerkers: string[]
   kijkers: string[]
-  expand?: { beheerders?: Gebruiker[]; bewerkers?: Gebruiker[]; kijkers?: Gebruiker[] }
+  expand?: { beheerders?: Gebruiker[]; kijkers?: Gebruiker[] }
 }
 export interface Uitnodiging extends RecordModel { team: string; email: string; rol: Rol }
 
 export const rolIn = (team: Team, userId: string): Rol | null =>
-  team.beheerders.includes(userId) ? 'beheerder' : team.bewerkers.includes(userId) ? 'bewerker' : team.kijkers.includes(userId) ? 'kijker' : null
+  team.beheerders?.includes(userId) ? 'beheerder' : team.kijkers?.includes(userId) ? 'kijker' : null
 
 // Adres van deze app (test of live), voor de links in uitnodigingsmails
 export const appAdres = () => window.location.origin + window.location.pathname.replace(/index\.html$/, '')
