@@ -1,0 +1,184 @@
+.historie {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.historie section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.historie-leeg,
+.historie-uitleg,
+.doelsaldo {
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+  line-height: 1.3;
+}
+
+.historie-leeg {
+  padding: 24px 8px;
+  text-align: center;
+}
+
+.doelsaldo {
+  text-align: center;
+}
+
+.balans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.balans-vak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.balans-vak.W { border-color: #16a34a; }
+.balans-vak.G { border-color: #9ca3af; }
+.balans-vak.V { border-color: #dc2626; }
+
+.balans-getal {
+  font-size: calc(var(--base-readable-size) * 1.5);
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.1;
+}
+
+.balans-naam {
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+}
+
+.historie-lijst {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historie-regel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 14px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: inherit;
+  text-align: left;
+  color: #1f2937;
+}
+
+.wedstrijd-regel {
+  min-height: 76px;
+  cursor: pointer;
+}
+
+.wedstrijd-regel:active:not(:disabled) {
+  background: #eef2ff;
+}
+
+.wedstrijd-regel:disabled {
+  cursor: default;
+  background: #f9fafb;
+}
+
+.regel-tekst {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.regel-naam {
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.regel-sub,
+.regel-waarde {
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.regel-waarde {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.uitslag {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: white;
+  white-space: nowrap;
+}
+
+.uitslag.W { background: #16a34a; }
+.uitslag.G { background: #6b7280; }
+.uitslag.V { background: #dc2626; }
+
+.uitslag.groot {
+  align-self: center;
+  font-size: calc(var(--base-readable-size) * 1.6);
+  padding: 8px 24px;
+}
+
+.detail {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.detail-regel {
+  font-size: var(--base-readable-size);
+  color: #1f2937;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.detail-knoppen {
+  flex-wrap: wrap;
+}
+
+.detail-knoppen .btn {
+  flex: 1 1 40%;
+}
+
+.historie .btn-gevaar,
+.detail-knoppen .btn-gevaar {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 2px solid #fca5a5;
+}
+
+.knop-rood {
+  background: #dc2626;
+}

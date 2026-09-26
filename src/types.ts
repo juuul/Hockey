@@ -60,3 +60,32 @@ export const spelvormVan = (opstelling: OpstellingNaam): Spelvorm =>
   OPSTELLINGEN_PER_SPELVORM[6].includes(opstelling) ? 6 : 9;
 
 export const veldPosities = (opstelling: OpstellingNaam): Position[] => OPSTELLINGEN[opstelling].flat();
+
+// Tegenstanders worden onthouden zodat je ze later kunt kiezen
+export interface Club {
+  id: string;
+  naam: string;
+  laatstGebruikt: number; // tijdstip, meest recente bovenaan in de keuzelijst
+}
+
+// Gegevens van de wedstrijd die nu bezig is
+export interface WedstrijdInfo {
+  datum: string | null; // 'JJJJ-MM-DD'; null = vandaag
+  clubId: string | null;
+  thuis: boolean;
+}
+
+// Afgesloten wedstrijd. Namen worden meebewaard zodat de historie klopt als een speler of club later weg is
+export interface GespeeldeWedstrijd {
+  id: string;
+  datum: string;
+  clubId: string;
+  tegenstander: string;
+  thuis: boolean;
+  wij: number;
+  zij: number;
+  doelpunten: { spelerId: string | null; naam: string }[];
+  spelers: { id: string; naam: string; wissels: number }[]; // wie meedeed
+  opstelling: OpstellingNaam;
+  opgeslagenOp: number;
+}

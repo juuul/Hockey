@@ -15,8 +15,14 @@
 }
 
 .tab-btn {
-  flex: 1;
-  padding: 14px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
   border: none;
   background: none;
   cursor: pointer;
@@ -28,6 +34,7 @@
 }
 
 .tab-btn.active {
+  flex: 2.4 1 auto;
   color: #1e40af;
   border-bottom-color: #1e40af;
 }
@@ -41,4 +48,17 @@
   flex-direction: column;
   min-height: 0;
   width: 100%;
+}
+
+.tab-icoon {
+  font-size: calc(var(--base-readable-size) * 1.15);
+  line-height: 1;
+}
+
+.tab-btn:not(.active) .tab-icoon {
+  opacity: 0.6;
+}
+
+.tab-naam {
+  white-space: nowrap;
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { OpstellingNaam, OPSTELLINGEN_PER_SPELVORM, Player, Position, Spelvorm, spelvormVan, veldPosities, Wissel } from '../types'
+import { Club, GespeeldeWedstrijd, OpstellingNaam, OPSTELLINGEN_PER_SPELVORM, Player, Position, Spelvorm, spelvormVan, veldPosities, Wissel, WedstrijdInfo } from '../types'
 import { nieuweOpstelling as lootOpstelling, resetTellers, stempelInkomers, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling, pasOpstellingAan } from '../opstelling'
+import { nieuwId, vandaag, vindClub } from '../historie'
 
 // Starttijdstip + opgebouwde tijd i.p.v. een teller: zo klopt de tijd ook na verversen of een vergrendeld scherm
 export interface TimerStand {
@@ -40,10 +41,32 @@ interface HockeyContextType {
   kiesOpstelling: (opstelling: OpstellingNaam) => void
   resetScore: () => void
   setVastePositie: (spelerId: string, keuze: number, positie: string | null) => void
+  clubs: Club[]
+  clubToevoegen: (naam: string) => string
+  hernoemClub: (id: string, naam: string) => void
+  verwijderClub: (id: string) => void
+  wedstrijd: WedstrijdInfo
+  zetWedstrijd: (info: WedstrijdInfo) => void
+  wedstrijden: GespeeldeWedstrijd[]
+  wedstrijdAfsluiten: (info: WedstrijdInfo, tegenstander: string) => void
+  wijzigWedstrijd: (id: string, info: WedstrijdInfo, tegenstander: string) => void
+  verwijderWedstrijd: (id: string) => void
 }
 
 // Test en live delen dezelfde origin (github.io), dus aparte opslag
 const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
+
+const LEGE_WEDSTRIJD: WedstrijdInfo = { datum: null, clubId: null, thuis: true }
+
+// Kapotte of geblokkeerde opslag: gewoon met de standaardwaarde beginnen
+function lees<T>(sleutel: string, standaard: T): T {
+  try {
+    const saved = localStorage.getItem(`${OPSLAG}_${sleutel}`)
+    return saved ? JSON.parse(saved) : standaard
+  } catch {
+    return standaard
+  }
+}
 
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 
@@ -124,6 +147,22 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   const startTimer = () => setTimer({ ...timer, gestartOp: Date.now() })
   const pauzeTimer = () => setTimer({ gestartOp: null, opgebouwd: timer.opgebouwd + (timer.gestartOp !== null ? Date.now() - timer.gestartOp : 0) })
   const stopTimer = () => setTimer({ gestartOp: null, opgebouwd: 0 })
+
+  const [clubs, setClubs] = useState<Club[]>(() => lees('clubs', []))
+  const [wedstrijd, zetWedstrijd] = useState<WedstrijdInfo>(() => lees('wedstrijd', LEGE_WEDSTRIJD))
+  const [wedstrijden, setWedstrijden] = useState<GespeeldeWedstrijd[]>(() => lees('wedstrijden', []))
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_clubs`, JSON.stringify(clubs))
+  }, [clubs])
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_wedstrijd`, JSON.stringify(wedstrijd))
+  }, [wedstrijd])
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_wedstrijden`, JSON.stringify(wedstrijden))
+  }, [wedstrijden])
 
   const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score; doelpunten: (string | null)[] }[]>([])
 
@@ -254,6 +293,56 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     stopTimer()
   }
 
+  // Bestaat de naam al (hoofdletters maken niet uit), dan die club
+  const clubToevoegen = (naam: string) => {
+    const bestaand = vindClub(clubs, naam)
+    if (bestaand) return bestaand.id
+    const club: Club = { id: nieuwId(), naam: naam.trim(), laatstGebruikt: Date.now() }
+    setClubs(c => [...c, club])
+    return club.id
+  }
+
+  const hernoemClub = (id: string, naam: string) =>
+    setClubs(clubs.map(c => (c.id === id ? { ...c, naam: naam.trim() } : c)))
+
+  // Oude wedstrijden houden de naam die bij het opslaan gold
+  const verwijderClub = (id: string) => {
+    setClubs(clubs.filter(c => c.id !== id))
+    if (wedstrijd.clubId === id) zetWedstrijd({ ...wedstrijd, clubId: null })
+  }
+
+  // Bewaart de wedstrijd en begint een nieuwe (zoals Alles resetten). Niet terug te draaien met Undo.
+  // De naam gaat mee omdat een net toegevoegde club nog niet in 'clubs' staat
+  const wedstrijdAfsluiten = (info: WedstrijdInfo, tegenstander: string) => {
+    if (!info.clubId) return
+    const clubId = info.clubId
+    const gespeeld: GespeeldeWedstrijd = {
+      id: nieuwId(),
+      datum: info.datum ?? vandaag(),
+      clubId,
+      tegenstander,
+      thuis: info.thuis,
+      wij: score.wij,
+      zij: score.zij,
+      doelpunten: doelpunten.map(id => ({ spelerId: id, naam: spelers.find(s => s.id === id)?.naam ?? 'Onbekend' })),
+      spelers: spelers.filter(s => s.meedoen).map(s => ({ id: s.id, naam: s.naam, wissels: s.wisselCount })),
+      opstelling,
+      opgeslagenOp: Date.now(),
+    }
+    setWedstrijden(w => [...w, gespeeld])
+    setClubs(c => c.map(club => (club.id === clubId ? { ...club, laatstGebruikt: Date.now() } : club)))
+    zetWedstrijd({ ...LEGE_WEDSTRIJD, thuis: info.thuis })
+    allesResetten()
+    setHistory([])
+  }
+
+  const wijzigWedstrijd = (id: string, info: WedstrijdInfo, tegenstander: string) =>
+    setWedstrijden(wedstrijden.map(w => (w.id === id && info.clubId
+      ? { ...w, datum: info.datum ?? w.datum, clubId: info.clubId, tegenstander, thuis: info.thuis }
+      : w)))
+
+  const verwijderWedstrijd = (id: string) => setWedstrijden(wedstrijden.filter(w => w.id !== id))
+
   const resetScore = () => {
     remember()
     setScore({ wij: 0, zij: 0 })
@@ -281,7 +370,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten, clubs, clubToevoegen, hernoemClub, verwijderClub, wedstrijd, zetWedstrijd, wedstrijden, wedstrijdAfsluiten, wijzigWedstrijd, verwijderWedstrijd }}>
       {children}
     </HockeyContext.Provider>
   )

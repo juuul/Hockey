@@ -5,17 +5,21 @@ import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
 import Timer from '../components/Timer'
 import ScorerModal from '../components/ScorerModal'
+import WedstrijdModal from '../components/WedstrijdModal'
+import { datumTekst } from '../historie'
 import { tel } from '../statistiek'
 import { sorteerWissels, veldKleuren } from '../opstelling'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling, allesResetten } = useHockey()
+  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling, allesResetten, clubs, wedstrijd, zetWedstrijd, wedstrijdAfsluiten } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
   const [vraag, setVraag] = useState<'wissels' | 'opstelling' | 'alles' | null>(null)
   const [kiesScorer, setKiesScorer] = useState(false)
+  const [wedstrijdVraag, setWedstrijdVraag] = useState<'gegevens' | 'afsluiten' | null>(null)
+  const tegenstander = clubs.find(c => c.id === wedstrijd.clubId)?.naam
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
   const keeper = spelers.find(s => s.isKeeper)
@@ -136,6 +140,11 @@ export default function Dashboard() {
     )}
 
     <div className="dashboard-knoppen">
+      <button className="wedstrijd-kaart" onClick={() => setWedstrijdVraag('gegevens')}>
+        <span className="wedstrijd-kaart-club">{tegenstander ? `Tegen ${tegenstander}` : 'Kies tegenstander'}</span>
+        <span className="wedstrijd-kaart-info">{wedstrijd.thuis ? 'Thuis' : 'Uit'} · {wedstrijd.datum ? datumTekst(wedstrijd.datum) : 'vandaag'}</span>
+      </button>
+      <button className="btn btn-primary" onClick={() => setWedstrijdVraag('afsluiten')}>Wedstrijd afsluiten</button>
       <button className="btn btn-gevaar" onClick={() => setVraag('alles')}>Alles resetten</button>
       {doelpunten.length > 0 && (
         <div className="doelpunten">
@@ -173,6 +182,28 @@ export default function Dashboard() {
           doelpunten={doelpunten}
           onKies={id => { scoor('wij', 1, id); tel(id ? 'score-wij' : 'score-wij-onbekend'); setKiesScorer(false) }}
           onClose={() => setKiesScorer(false)}
+        />
+      )}
+
+      {wedstrijdVraag === 'gegevens' && (
+        <WedstrijdModal
+          titel="Wedstrijd"
+          start={wedstrijd}
+          bevestig="Klaar"
+          onOpslaan={info => { zetWedstrijd(info); tel('wedstrijd-gegevens'); setWedstrijdVraag(null) }}
+          onClose={() => setWedstrijdVraag(null)}
+        />
+      )}
+
+      {wedstrijdVraag === 'afsluiten' && (
+        <WedstrijdModal
+          titel={`Afsluiten: ${score.wij} – ${score.zij}`}
+          start={wedstrijd}
+          bevestig="Opslaan"
+          clubVerplicht
+          uitleg="Daarna begint een nieuwe wedstrijd: nieuwe opstelling, wissels en score op 0, timer 0:00."
+          onOpslaan={(info, naam) => { wedstrijdAfsluiten(info, naam); tel('wedstrijd-afgesloten'); setWedstrijdVraag(null) }}
+          onClose={() => setWedstrijdVraag(null)}
         />
       )}
 
