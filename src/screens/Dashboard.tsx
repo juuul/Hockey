@@ -10,11 +10,11 @@ import { sorteerWissels, veldKleuren } from '../opstelling'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling } = useHockey()
+  const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling, allesResetten } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
   const [selectedPlayerName, setSelectedPlayerName] = useState('')
-  const [vraag, setVraag] = useState<'wissels' | 'opstelling' | null>(null)
+  const [vraag, setVraag] = useState<'wissels' | 'opstelling' | 'alles' | null>(null)
   const [kiesScorer, setKiesScorer] = useState(false)
 
   const fieldPlayers = spelers.filter(s => s.inVeld && !s.isKeeper)
@@ -69,8 +69,9 @@ export default function Dashboard() {
 
   const bevestigVraag = () => {
     if (vraag === 'wissels') resetWissels()
+    else if (vraag === 'alles') allesResetten()
     else nieuweOpstelling()
-    tel(vraag === 'wissels' ? 'reset' : 'nieuwe-opstelling')
+    tel(vraag === 'wissels' ? 'reset' : vraag === 'alles' ? 'alles-resetten' : 'nieuwe-opstelling')
     setVraag(null)
   }
 
@@ -134,6 +135,7 @@ export default function Dashboard() {
     )}
 
     <div className="dashboard-knoppen">
+      <button className="btn btn-gevaar" onClick={() => setVraag('alles')}>Alles resetten</button>
       {doelpunten.length > 0 && (
         <div className="doelpunten">
           <div className="section-title">Doelpunten</div>
@@ -170,6 +172,21 @@ export default function Dashboard() {
           doelpunten={doelpunten}
           onKies={id => { scoor('wij', 1, id); tel(id ? 'score-wij' : 'score-wij-onbekend'); setKiesScorer(false) }}
           onClose={() => setKiesScorer(false)}
+        />
+      )}
+
+      {vraag === 'alles' && (
+        <ResetModal
+          titel="Alles resetten?"
+          regels={[
+            { icoon: '🔀', tekst: 'Nieuwe opstelling geloot' },
+            { icoon: '↺', tekst: 'Wissels: veld 0, bank 1' },
+            { icoon: '⚽', tekst: 'Score 0 – 0, scorers gewist' },
+            { icoon: '⏱', tekst: 'Timer 0:00 en gestopt' },
+          ]}
+          bevestig="Ja, alles resetten"
+          onConfirm={bevestigVraag}
+          onCancel={() => setVraag(null)}
         />
       )}
 

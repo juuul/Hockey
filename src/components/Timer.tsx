@@ -1,26 +1,8 @@
 import { useEffect, useState } from 'react'
-import { OPSLAG } from '../context/HockeyContext'
+import { useHockey } from '../context/HockeyContext'
 import ResetModal from './ResetModal'
 import { tel } from '../statistiek'
 import './Timer.css'
-
-// Starttijdstip + opgebouwde tijd i.p.v. een teller: zo klopt de tijd ook na verversen of een vergrendeld scherm
-interface TimerStand {
-  gestartOp: number | null
-  opgebouwd: number
-}
-
-const SLEUTEL = `${OPSLAG}_timer`
-
-function laad(): TimerStand {
-  try {
-    const saved = localStorage.getItem(SLEUTEL)
-    if (saved) return JSON.parse(saved)
-  } catch {
-    // kapotte of geblokkeerde opslag: begin gewoon op 0
-  }
-  return { gestartOp: null, opgebouwd: 0 }
-}
 
 function formatteer(ms: number) {
   const totaal = Math.floor(ms / 1000)
@@ -30,14 +12,10 @@ function formatteer(ms: number) {
 }
 
 export default function Timer() {
-  const [stand, setStand] = useState<TimerStand>(laad)
+  const { timer: stand, startTimer, pauzeTimer, stopTimer } = useHockey()
   const [nu, setNu] = useState(Date.now())
   const [stopVraag, setStopVraag] = useState(false)
   const loopt = stand.gestartOp !== null
-
-  useEffect(() => {
-    localStorage.setItem(SLEUTEL, JSON.stringify(stand))
-  }, [stand])
 
   useEffect(() => {
     if (!loopt) return
@@ -49,15 +27,15 @@ export default function Timer() {
   const verstreken = stand.opgebouwd + (loopt ? nu - stand.gestartOp! : 0)
 
   const start = () => {
-    setStand({ ...stand, gestartOp: Date.now() })
+    startTimer()
     tel('timer-start')
   }
   const pauze = () => {
-    setStand({ gestartOp: null, opgebouwd: verstreken })
+    pauzeTimer()
     tel('timer-pauze')
   }
   const stop = () => {
-    setStand({ gestartOp: null, opgebouwd: 0 })
+    stopTimer()
     setStopVraag(false)
     tel('timer-stop')
   }

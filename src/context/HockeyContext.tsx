@@ -2,6 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { OpstellingNaam, OPSTELLINGEN_PER_SPELVORM, Player, Position, Spelvorm, spelvormVan, veldPosities, Wissel } from '../types'
 import { nieuweOpstelling as lootOpstelling, resetTellers, stempelInkomers, haalUitVeld, zetMeedoen as zetMeedoenIn, plaatsIn as plaatsInOpstelling, pasOpstellingAan } from '../opstelling'
 
+// Starttijdstip + opgebouwde tijd i.p.v. een teller: zo klopt de tijd ook na verversen of een vergrendeld scherm
+export interface TimerStand {
+  gestartOp: number | null
+  opgebouwd: number
+}
+
 export interface Score {
   wij: number
   zij: number
@@ -25,6 +31,11 @@ interface HockeyContextType {
   scoor: (team: keyof Score, verschil: 1 | -1, scorerId?: string | null) => void
   doelpunten: (string | null)[]
   spelvorm: Spelvorm
+  timer: TimerStand
+  startTimer: () => void
+  pauzeTimer: () => void
+  stopTimer: () => void
+  allesResetten: () => void
   opstelling: OpstellingNaam
   kiesOpstelling: (opstelling: OpstellingNaam) => void
   resetScore: () => void
@@ -32,7 +43,7 @@ interface HockeyContextType {
 }
 
 // Test en live delen dezelfde origin (github.io), dus aparte opslag
-export const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
+const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 
@@ -95,6 +106,24 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem(`${OPSLAG}_opstelling`, JSON.stringify(opstelling))
   }, [opstelling])
+
+  const [timer, setTimer] = useState<TimerStand>(() => {
+    try {
+      const saved = localStorage.getItem(`${OPSLAG}_timer`)
+      if (saved) return JSON.parse(saved)
+    } catch {
+      // kapotte of geblokkeerde opslag: begin gewoon op 0
+    }
+    return { gestartOp: null, opgebouwd: 0 }
+  })
+
+  useEffect(() => {
+    localStorage.setItem(`${OPSLAG}_timer`, JSON.stringify(timer))
+  }, [timer])
+
+  const startTimer = () => setTimer({ ...timer, gestartOp: Date.now() })
+  const pauzeTimer = () => setTimer({ gestartOp: null, opgebouwd: timer.opgebouwd + (timer.gestartOp !== null ? Date.now() - timer.gestartOp : 0) })
+  const stopTimer = () => setTimer({ gestartOp: null, opgebouwd: 0 })
 
   const [history, setHistory] = useState<{ spelers: Player[]; wisselingen: Wissel[]; score: Score; doelpunten: (string | null)[] }[]>([])
 
@@ -215,6 +244,16 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
     setSpelers(pasOpstellingAan(spelers, veldPosities(nieuw)))
   }
 
+  // Nieuwe wedstrijd: opnieuw loten, tellers, score en timer terug. Spelers, aanwezigheid, voorkeuren en opstelling blijven
+  const allesResetten = () => {
+    remember()
+    zetSpelersRuw(resetTellers(lootOpstelling(spelers, vastePosities, posities).map(s => ({ ...s, inVolgorde: 0 }))))
+    setWisselingen([])
+    setScore({ wij: 0, zij: 0 })
+    setDoelpunten([])
+    stopTimer()
+  }
+
   const resetScore = () => {
     remember()
     setScore({ wij: 0, zij: 0 })
@@ -242,7 +281,7 @@ export function HockeyProvider({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling }}>
+    <HockeyContext.Provider value={{ spelers, wisselingen, vastePosities, addSpeler, deleteSpeler, zetMeedoen, plaatsIn, wissel, resetWissels, nieuweOpstelling, verplaats, undo, canUndo: history.length > 0, setVastePositie, score, scoor, resetScore, doelpunten, spelvorm, opstelling, kiesOpstelling, timer, startTimer, pauzeTimer, stopTimer, allesResetten }}>
       {children}
     </HockeyContext.Provider>
   )

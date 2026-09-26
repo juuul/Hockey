@@ -42,6 +42,16 @@
   border-top: 2px solid #e5e7eb;
 }
 
+.btn-gevaar {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 2px solid #fca5a5;
+}
+
+.btn-gevaar:active {
+  background: #fecaca;
+}
+
 .btn:disabled {
   opacity: 0.45;
   cursor: default;
