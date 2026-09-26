@@ -1,0 +1,19 @@
+# Hockey-server (PocketBase). Alleen op 127.0.0.1: van buitenaf bereikbaar via Tailscale Funnel
+services:
+  pocketbase:
+    build: .
+    container_name: hockey-pocketbase
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./pb_migrations:/pb/pb_migrations:ro
+      - ./pb_hooks:/pb/pb_hooks:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
