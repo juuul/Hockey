@@ -1,140 +1,89 @@
-# Hockey Substitutie App - Technische Documentatie
+# Hockey Wissel-app
 
-## Project Overzicht
-Een web-app voor het beheren van hockey-spelers en hun substitutie-historiek. Track wie er op het veld staat, wie beschikbaar is om in te wisselen, en hoe vaak elke speler gewisseld is.
+Web-app om langs het veld (op een telefoon) de opstelling, wissels, score en tijd bij te houden voor een meidenteam. Geen backend: alles staat per toestel in localStorage.
 
-## Kern Functioneel Vereisten
-- **Speelerstelling weergeven**: Live weergave van spelers op veld met hun positie
-- **Spelersbeheer**: Spelers activeren/deactiveren (in/uit beschikbaarheid)
-- **Wisselronde**: Click "Wissel" → selecteer spelers om in te brengen → automatisch bij 1 optie
-- **Wisselhistoriek**: Track hoeveel keer elke speler gewisseld is (de teller gaat +1 bij de speler die **uit** het veld gaat; de invaller neemt diens positie over)
-- **Sortering**: Spelers die nog niet gewisseld zijn → bovenaan
+- Live: https://juliaan.eu/hockey/ (branch `main`)
+- Test: https://juliaan.eu/hockey/test/ (branch `test`)
+- Repo: github.com/juuul/hockey
 
-## Opstelling: 2-3-3 Formatie
-| Positie | Code | Substitutie-eligible |
-|---------|------|----------------------|
-| Links Wing | LW | Ja |
-| Rechts Wing | RW | Ja |
-| Links Midden | LM | Ja |
-| Centraal Midden | CM | Ja |
-| Rechts Midden | RM | Ja |
-| Links Back Midden | LBM | Ja |
-| Centraal Back Midden | CBM | Ja |
-| Rechts Back Midden | RBM | Ja |
-| Keeper | K | Nee |
+## Werkwijze (belangrijk)
+- Werk op branch `test`. Elke wijziging: typecheck (`npx tsc --noEmit -p .`), commit, push naar `test`, wacht op de deploy en controleer de test-URL.
+- Naar `main` (live) alleen als de gebruiker dat expliciet zegt ("zet live", "zet maar door", "naar main"). Dan `git merge --ff-only test` op `main` en pushen.
+- De gebruiker is Nederlandstalig en test op de telefoon; antwoord in het Nederlands, kort.
+- Browser/touch kan hier niet getest worden: zeg dat eerlijk en laat de gebruiker het op de telefoon checken.
+- Logica testen op de echte code: schrijf een klein script in de scratchpad dat `src/opstelling.ts` importeert, bundel met `node_modules/.bin/esbuild <script> --bundle --platform=node` en draai het met node.
 
-## Speelsters
-**Team "Wedstrijd"** (12 speelsters totaal)
+## Functionaliteit
 
-| # | Naam | Positie |
-|----|------|---------|
-| 1 | Julia Arnold | Keeper |
-| 2 | Lizzy Best | Veld |
-| 3 | Fee Daan | Veld |
-| 4 | Sarah Eerdmans | Veld |
-| 5 | Isa Flierman | Veld |
-| 6 | Evi Kruft | Veld |
-| 7 | Aster Meijboom | Veld |
-| 8 | Floor Oreel | Veld |
-| 9 | Carice Plantinga | Veld |
-| 10 | Sara van Tetering | Veld |
-| 11 | Benthe van der Wijk | Veld |
+### Tabbladen
+1. **Dashboard**
+   - Bovenaan de scoreregel: `[−] [Wij n] [Zij n] [−]`. Tik op **Wij** opent "Wie scoorde?" (veld van voor naar achter, dan keeper, dan wissels, of "Weet ik niet"). **Zij** telt direct +1. `−` haalt het laatste doelpunt (en bij Wij de scorer) weg.
+   - Veld met de opstelling en de keeper eronder. Tik op een speler: **Wissel** (met wisselspeler) of **Verplaatsen** (ruilen met veldspeler of wisselspeler). Keeper: alleen verplaatsen. Lege plek (gestippeld, "+"): tik om iemand erin te zetten.
+   - Eén regel wisselspelers in beeld (2 naast elkaar), zonder kopje. Meer wissels staan onder de vouw.
+   - **Onder de vouw** (alleen bereikbaar door te scrollen, bewust uit het zicht): extra wissels, overzicht doelpunten, knoppen **Alles resetten**, Undo, Nieuwe opstelling, Reset wissels, Score 0 – 0, en de **Timer** (Start/Pauze/Stop).
+2. **Spelers**: spelvorm (9 of 6 spelers) en opstelling kiezen; lijst van alle spelers met schakelaar "Doet mee / Doet niet mee", doelpunten per speler (⚽ n), speler toevoegen/verwijderen. Geen veld/bank-info hier.
+3. **Voorkeur**: per speler een 1e en 2e voorkeurspositie (alleen posities van de huidige opstelling). Dubbele voorkeuren mogen.
 
-*Rosalie de Kroon = Trainings slid (niet in team)*
+### Regels
+- **Wisselteller** gaat +1 bij de speler die **uit** het veld gaat (alleen bij Wissel, niet bij Verplaatsen). De invaller neemt de positie over.
+- **Wisselspelers sorteren**: minste wissels eerst; bij gelijke stand komt wie het laatst uit het veld ging onderaan. Zelfde volgorde in de wissel-pop-up.
+- **Kleuren in het veld** (alleen informatief, blokkeert niets), op volgorde van invallen (`inVolgorde`), niet op tijd: bij 9 spelers de laatste 2 invallers rood, 2 daarvoor oranje, de rest (ook de basis) groen; bij 6 spelers 1 rood, 1 oranje. Keeper geen kleur.
+- **Nieuwe opstelling**: eerst eerlijk loten wie begint (iedereen gelijke kans op de bank), dan per basisspeler de 1e voorkeur, daarna de 2e (beide in gelote volgorde, bij dubbele keuze wint een willekeurige), rest willekeurig. Tellers blijven staan; `inVolgorde` terug naar 0.
+- **Reset wissels**: alleen tellers — veldspelers 0, wisselspelers 1 (die staan al één keer "uit"). Opstelling en score blijven.
+- **Alles resetten**: nieuwe opstelling + reset wissels + score 0-0 en scorers weg + timer 0:00 gestopt. Spelers, aanwezigheid, voorkeuren en gekozen opstelling blijven.
+- **Afmelden** van een veldspeler: wisselspeler met de minste wissels neemt de plek over (teller ongewijzigd). Keeper afmelden laat het doel leeg. Aanmelden: naar een lege veldplek als die er is, anders de bank. Afgemelden doen niet mee in opstelling, wissels of loting.
+- **Andere opstelling kiezen**: wie op een positie staat die ook in de nieuwe opstelling zit blijft staan; spelers van weggevallen posities schuiven naar vrije plekken; te veel → bank, te weinig → aanvullen met minste wissels. Tellers blijven.
+- **Undo** draait spelers, wissels, score en scorers terug (niet de timer).
+- **Timer** bewaart starttijdstip + opgebouwde tijd, zodat hij klopt na verversen of een vergrendeld scherm. Stop vraagt bevestiging.
+- **Trek omlaag om te verversen** (eigen implementatie, `Verversen.tsx`): nodig omdat html/body niet scrollen (alleen `.content`). Rond draaiend icoon, niet in pop-ups.
+- Geen meldingen (toasts) na een bevestiging. Bevestigingsvragen alleen bij resets en timer-stop.
 
-## Technische Keuzes
+### Opstellingen
+Posities (van voor naar achter): `LW` links voor, `CV` centraal voor, `RW` rechts voor, `LM` links midden, `CM` midden, `RM` rechts midden, `LBM` links achter, `CBM` centraal achter, `RBM` rechts achter, `K` keeper. Codes nooit in de UI tonen, alleen de Nederlandse labels (`POSITIE_LABEL`).
 
-### Frontend
-- **Framework**: React (TypeScript)
-- **Styling**: gewone CSS per scherm/component (geen Tailwind)
-- **State Management**: React Context API + localStorage
-- **Build**: Vite (dev server op poort 5173, `host: true`; te openen via http://192.168.2.50:5173/ — poort 8765 is bezet)
+| Spelvorm | Opstellingen (eerste = standaard) |
+|---|---|
+| 9 spelers (8 + keeper) | 2-3-3, 3-3-2, 3-2-3 |
+| 6 spelers (5 + keeper) | 2-1-2, 2-2-1, 1-2-2 |
 
-**Waarom?** Snel te prototypen, goed voor real-time UI updates, makkelijk lokaal te testen zonder backend.
+Gedefinieerd in `OPSTELLINGEN` / `OPSTELLINGEN_PER_SPELVORM` in `src/types.ts`.
+
+### Team
+Keeper: Julia Arnold. Veld: Lizzy Best, Fee Daan, Sarah Eerdmans, Isa Flierman, Evi Kruft, Aster Meijboom, Floor Oreel, Carice Plantinga, Sara van Tetering, Benthe van der Wijk. (Rosalie de Kroon traint mee, niet in het team.) De app gebruikt voornamen; de startlijst staat in `INITIAL_PLAYERS` in de context.
 
 ## Mobiel ontwerp (verplicht)
-De app wordt langs het veld bediend op een **telefoon van ~10 cm diagonaal (~360px breed)**. Elke UI-wijziging moet hieraan voldoen:
+Bediend op een telefoon van ~10 cm diagonaal (~360px breed):
+- **Minimale lettergrootte 22px** via `--base-readable-size` in `src/index.css` (nu 24px); nergens kleiner.
+- **Aanraakdoelen minimaal 60px hoog.**
+- **Schermvullend** (`100dvh`), geen vaste breedtes/hoogtes. Het dashboard vult precies het scherm; alles wat niet vaak nodig is staat onder de vouw.
+- **Veld schaalt mee** via container units (`cqw`/`cqh`). Spelers zijn **rondjes** (gebruiker koos tegen ovalen); ze worden alleen breder als een naam niet past.
+- **Pop-ups**: gecentreerd, grote tekst en knoppen.
+- Test op een smal, laag scherm (360×640).
 
-- **Minimale lettergrootte 22px** voor alle tekst — even groot als de namen in de spelerbollen. Kleiner is onleesbaar.
-- **Aanraakdoelen minimaal 60px hoog** (knoppen, lijstitems, opties).
-- **Schermvullend**: geen vaste breedtes/hoogtes; de app vult het scherm (`100dvh`), zonder witte ruimte eronder of opzij.
-- **Eén lettergrootte-variabele**: `--base-readable-size` in `src/index.css` is de minimale lettergrootte voor alle tekst; aanpassen op die ene plek.
-- **Veld schaalt mee**: het veld vult de resterende hoogte; bolgrootte volgt uit het veld via container units (`cqw`/`cqh`). Bollen mogen ovaal worden: de naam moet er altijd in passen.
-- **Wissels-sectie**: maximaal 25% van de schermhoogte (scrollt als er meer wisselspelers zijn).
-- **Pop-ups**: gecentreerd, minimaal de helft van de schermhoogte, grote tekst (≥ 24px) en grote knoppen.
-- Op desktop blijft de inhoud gecentreerd met een max-breedte, zodat het niet uitwaaiert.
-- Test altijd eerst op een smal, laag scherm (360×640) voordat een wijziging klaar is.
+## Techniek
+- React + TypeScript, Vite, gewone CSS per scherm/component (geen Tailwind), state in React Context (`src/context/HockeyContext.tsx`) + localStorage.
+- Dev server: `npm run dev` op poort 5173 (`host: true`), bereikbaar via http://192.168.2.50:5173/ (poort 8765 is bezet).
+- `src/opstelling.ts`: pure functies (loting, tellers, afmelden, plaatsen, opstelling aanpassen, kleuren, sorteren) — hier logica toevoegen en testen.
+- `src/statistiek.ts`: GoatCounter (`juuul.goatcounter.com`); `tel('knop')` telt klikken, alleen in de gepubliceerde build, op test met voorvoegsel `test/`.
 
-### Data Model
+### Datamodel (`src/types.ts`)
 ```typescript
-interface Speler {
-  id: string;
-  naam: string;
-  positie: Positie;
-  inVeld: boolean;
-  wisselCount: number;
-  isKeeper: boolean;
+interface Player {
+  id: string; naam: string; positie: Position;
+  inVeld: boolean;      // staat in het veld (anders bank)
+  meedoen: boolean;     // aanwezig vandaag
+  inVolgorde?: number;  // volgnummer van invallen (voor de kleuren)
+  wisselCount: number; isKeeper: boolean;
 }
-
-interface Wedstrijd {
-  spelers: Speler[];
-  wissel: Wissel[];
-}
-
-interface Wissel {
-  tijdstip: Date;
-  inSpeler: Speler['id'];
-  uitSpeler: Speler['id'];
-}
+interface Wissel { id: string; tijdstip: Date; inSpeler: string; uitSpeler: string; positie: Position }
 ```
 
-### Opslag
-- **localStorage** voor demo/training (geen backend nodig)
-- Makkelijk uit te breiden naar database later
-
-## Ontwikkelings Stappen
-
-### Fase 1: Setup & Data Model ✓ (Planning)
-- [ ] React + TypeScript project initialiseren
-- [ ] Tailwind CSS opzetten
-- [ ] Data context + hooks definiëren
-- [ ] Mock data laden (5-10 spelers)
-
-### Fase 2: Speelerstelling View
-- [ ] "Veld" layout met posities
-- [ ] Huidige speler per positie weergeven
-- [ ] Beschikbare wisselspelers tonen
-- [ ] Speler enable/disable toggle
-
-### Fase 3: Wisselronde
-- [ ] "Wissel" button per positie (niet voor keeper)
-- [ ] Wisselspelers selectie modal/dropdown
-- [ ] Swap uitvoeren + historiek updaten
-- [ ] Wissel verving + animations
-
-### Fase 4: Historiek & Analytics
-- [ ] Wisselcount per speler
-- [ ] Sortering (niet gewisseld eerst)
-- [ ] Statiteken weergave
-- [ ] Export wisselhistorie (CSV)
-
-## Schermstructuur
-
-### Scherm 1: Hoofd Dashboard
-- Veld met huidige opstelling (7 posities + keeper)
-- Beschikbare wisselspelers lijst (links)
-- Werktuigen (undo, reset, export)
-
-### Scherm 2: Spelers Beheer
-- Volledige speelerslijst
-- Enable/disable toggle per speler
-- Wisselhistorie per speler
-
-## Volgende Stap
-Review UI mockup → wijzigingen aanpassen → code starten!
+### Opslag (localStorage)
+Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein, dus gescheiden): `spelers`, `wisselingen`, `vaste_posities` (per speler `[1e, 2e]`), `score`, `doelpunten` (scorer-id's of null), `opstelling`, `timer`. Bij nieuwe velden altijd migreren vanuit oude opgeslagen data (zie bestaande voorbeelden in de context). Opslag is per toestel/browser: andere telefoons zien andere data.
 
 ## Deploy
-- `test` → https://juliaan.eu/hockey/test/ — elke wijziging wordt hier direct naartoe gepusht.
-- `main` → https://juliaan.eu/hockey/ (live) — alleen mergen/pushen als de gebruiker dat expliciet zegt.
-- De workflow bouwt altijd beide branches samen tot één Pages-site. Test gebruikt eigen localStorage-sleutels (`hockey_test_*`).
-- Asset-paden zijn relatief (`base: './'`), zodat de build op elk pad/domein werkt.
+- GitHub Actions (`.github/workflows/deploy.yml`) bouwt bij elke push naar `main` of `test` **beide** branches en publiceert ze samen als één Pages-site: `main` in de root, `test` in `/test/` (test met `vite build --mode test`).
+- Asset-paden zijn relatief (`base: './'`), dus de build werkt op elk pad/domein.
+- Domein `juliaan.eu` hoort bij de repo `juuul/juuul.github.io` (startpagina met knoppen naar /hockey/ en financeplannerapp.com, lokaal in `/home/metime/projects/juuul.github.io`); deze repo verschijnt daardoor op `/hockey/`. Paden zijn hoofdlettergevoelig: repo heet `hockey`.
+- DNS bij zxcs/Vimexx (A + AAAA naar GitHub Pages). De lokale resolver op deze machine cachet soms nog een oud parkeeradres; controleer live dan met `curl --resolve juliaan.eu:443:185.199.108.153 ...`.
+- GitHub Pages cachet pagina's tot 10 minuten; de gebruiker ververst door de pagina omlaag te trekken.
