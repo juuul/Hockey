@@ -189,7 +189,7 @@ export default function Dashboard() {
         <WedstrijdModal
           titel="Wedstrijd"
           start={wedstrijd}
-          bevestig="Klaar"
+          bevestig="Opslaan"
           onOpslaan={info => { zetWedstrijd(info); tel('wedstrijd-gegevens'); setWedstrijdVraag(null) }}
           onClose={() => setWedstrijdVraag(null)}
         />

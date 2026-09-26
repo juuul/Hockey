@@ -80,7 +80,10 @@
   white-space: nowrap;
 }
 
-.gekozen-club-weg {
+.gekozen-club-wijzig {
+  font-family: inherit;
+  font-weight: 700;
+  padding: 0 14px;
   min-width: 60px;
   min-height: 60px;
   border: none;
