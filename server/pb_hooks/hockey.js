@@ -47,4 +47,36 @@ function stuurUitnodiging(app, inv) {
   app.newMailClient().send(msg)
 }
 
-module.exports = { ROL_VELD, TOEGESTAAN, vindUitnodiging, stuurUitnodiging }
+function mail(app, aan, onderwerp, html) {
+  const meta = app.settings().meta
+  app.newMailClient().send(new MailerMessage({
+    from: { address: meta.senderAddress, name: meta.senderName },
+    to: aan.map((a) => ({ address: a })),
+    subject: onderwerp,
+    html: html,
+  }))
+}
+
+// Uitnodiging als beheerder aanmaken en mailen (zelfde als via de app, maar vanuit de server)
+function nodigUit(app, teamId, email, rol, terug, makerId) {
+  const inv = new Record(app.findCollectionByNameOrId("uitnodigingen"))
+  inv.set("team", teamId)
+  inv.set("email", email)
+  inv.set("rol", rol)
+  inv.set("terug", terug)
+  inv.set("token", $security.randomString(40))
+  inv.set("maker", makerId || "")
+  app.save(inv)
+  stuurUitnodiging(app, inv)
+}
+
+function vindAanmelding(app, token) {
+  if (!token || token.length < 30) throw new NotFoundError("Aanmelding niet gevonden")
+  try {
+    return app.findFirstRecordByData("aanmeldingen", "token", token)
+  } catch (_) {
+    throw new NotFoundError("Aanmelding niet gevonden")
+  }
+}
+
+module.exports = { ROL_VELD, TOEGESTAAN, vindUitnodiging, stuurUitnodiging, escape, mail, nodigUit, vindAanmelding }

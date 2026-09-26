@@ -68,3 +68,104 @@ routerAdd("POST", "/api/hockey/uitnodiging/{token}", (e) => {
 
   return e.json(200, { email, bestaat })
 })
+
+// ── Nieuwe teams aanmelden (openbaar) en goedkeuren door een superadmin via de link in de mail ──
+
+routerAdd("POST", "/api/hockey/aanmelding", (e) => {
+  const h = require(`${__hooks}/hockey.js`)
+  const b = e.requestInfo().body
+  const tekst = (v, max) => String(v || "").trim().slice(0, max)
+  const teamnaam = tekst(b.teamnaam, 60)
+  const naam = tekst(b.naam, 60)
+  const email = tekst(b.email, 200).toLowerCase()
+  const bericht = tekst(b.bericht, 1000)
+  const terug = String(b.terug || "")
+  if (!teamnaam) throw new BadRequestError("Vul de naam van het team in")
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new BadRequestError("Vul een geldig e-mailadres in")
+  if (!h.TOEGESTAAN.includes(terug)) throw new BadRequestError("Onbekend terugadres")
+
+  // Nogmaals op de knop gedrukt: niet opnieuw mailen
+  try {
+    e.app.findFirstRecordByFilter("aanmeldingen", "email = {:email} && teamnaam = {:teamnaam} && status = 'nieuw'", { email, teamnaam })
+    return e.json(200, { ok: true })
+  } catch (_) {}
+
+  const superadmins = e.app.findRecordsByFilter("users", "superadmin = true", "", 0, 0).map((u) => u.email())
+  if (!superadmins.length) throw new BadRequestError("Aanmelden kan nu niet")
+
+  const a = new Record(e.app.findCollectionByNameOrId("aanmeldingen"))
+  a.set("teamnaam", teamnaam)
+  a.set("naam", naam)
+  a.set("email", email)
+  a.set("bericht", bericht)
+  a.set("terug", terug)
+  a.set("token", $security.randomString(40))
+  a.set("status", "nieuw")
+  e.app.save(a)
+
+  const link = terug + "#aanmelding=" + a.getString("token")
+  try {
+    h.mail(e.app, superadmins, "Nieuwe teamaanmelding: " + teamnaam,
+      "<p>Er is een nieuw team aangemeld voor de Hockey Wissel-app.</p>" +
+      "<p><strong>Team:</strong> " + h.escape(teamnaam) + "<br><strong>Naam:</strong> " + h.escape(naam || "-") +
+      "<br><strong>E-mail:</strong> " + h.escape(email) + "</p>" +
+      (bericht ? "<p><strong>Bericht:</strong><br>" + h.escape(bericht).replace(/\n/g, "<br>") + "</p>" : "") +
+      "<p><a href=\"" + h.escape(link) + "\">Aanmelding bekijken en goedkeuren of afwijzen</a></p>" +
+      "<p>Deze link blijft geldig tot de aanmelding is behandeld.</p>")
+    h.mail(e.app, [email], "Aanmelding ontvangen: " + teamnaam,
+      "<p>Hallo" + (naam ? " " + h.escape(naam) : "") + ",</p>" +
+      "<p>We hebben je aanmelding voor <strong>" + h.escape(teamnaam) + "</strong> ontvangen. " +
+      "Zodra die is goedgekeurd, krijg je een mail met een link om je account te maken.</p>")
+  } catch (err) {
+    e.app.delete(a)
+    throw new BadRequestError("De aanmelding kon niet worden gemaild. Probeer het later nog eens.")
+  }
+  return e.json(200, { ok: true })
+})
+
+routerAdd("GET", "/api/hockey/aanmelding/{token}", (e) => {
+  const h = require(`${__hooks}/hockey.js`)
+  const a = h.vindAanmelding(e.app, e.request.pathValue("token"))
+  return e.json(200, {
+    teamnaam: a.getString("teamnaam"),
+    naam: a.getString("naam"),
+    email: a.getString("email"),
+    bericht: a.getString("bericht"),
+    status: a.getString("status"),
+    created: a.getString("created"),
+  })
+})
+
+// De link in de mail is het bewijs dat een superadmin dit doet. Openen (GET) verandert niets; pas de knop (POST) beslist
+routerAdd("POST", "/api/hockey/aanmelding/{token}", (e) => {
+  const h = require(`${__hooks}/hockey.js`)
+  const b = e.requestInfo().body
+  const a = h.vindAanmelding(e.app, e.request.pathValue("token"))
+  if (a.getString("status") !== "nieuw") throw new BadRequestError("Deze aanmelding is al behandeld")
+  const email = a.getString("email")
+  const teamnaam = String(b.teamnaam || a.getString("teamnaam")).trim().slice(0, 60)
+
+  if (b.besluit === "goed") {
+    e.app.runInTransaction((tx) => {
+      const team = new Record(tx.findCollectionByNameOrId("teams"))
+      team.set("naam", teamnaam)
+      tx.save(team)
+      a.set("status", "goedgekeurd")
+      a.set("teamnaam", teamnaam)
+      a.set("team", team.id)
+      tx.save(a)
+    })
+    h.nodigUit(e.app, a.getString("team"), email, "beheerder", a.getString("terug"), "")
+    return e.json(200, { status: "goedgekeurd" })
+  }
+  if (b.besluit === "af") {
+    a.set("status", "afgewezen")
+    e.app.save(a)
+    try {
+      h.mail(e.app, [email], "Aanmelding " + a.getString("teamnaam"),
+        "<p>Hallo,</p><p>Je aanmelding voor <strong>" + h.escape(a.getString("teamnaam")) + "</strong> is helaas niet goedgekeurd.</p>")
+    } catch (_) {}
+    return e.json(200, { status: "afgewezen" })
+  }
+  throw new BadRequestError("Kies goedkeuren of afwijzen")
+})

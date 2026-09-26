@@ -337,3 +337,16 @@ button.account-regel:disabled {
   background: #fef3c7;
   color: #92400e;
 }
+
+.account-bericht {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.account-citaat {
+  padding: 10px 12px;
+  border-left: 4px solid #c7d2fe;
+  background: #f9fafb;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

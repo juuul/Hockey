@@ -26,11 +26,11 @@ function AppContent() {
   const scrollVak = useRef<HTMLDivElement>(null)
   const [account, setAccount] = useState<{ start: AccountStart } | null>(null)
 
-  // Links uit de mail: #uitnodiging=… of #wachtwoord=…. Daarna het # weghalen, zodat verversen het niet opnieuw opent
+  // Links uit de mail: #uitnodiging=…, #wachtwoord=… of #aanmelding=…. Daarna het # weghalen, zodat verversen het niet opnieuw opent
   useEffect(() => {
-    const m = window.location.hash.match(/^#(uitnodiging|wachtwoord)=(.+)$/)
+    const m = window.location.hash.match(/^#(uitnodiging|wachtwoord|aanmelding)=(.+)$/)
     if (!m) return
-    setAccount({ start: { soort: m[1] as 'uitnodiging' | 'wachtwoord', token: decodeURIComponent(m[2]) } })
+    setAccount({ start: { soort: m[1] as 'uitnodiging' | 'wachtwoord' | 'aanmelding', token: decodeURIComponent(m[2]) } })
     history.replaceState(null, '', window.location.pathname + window.location.search)
   }, [])
 

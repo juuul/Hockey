@@ -6,9 +6,9 @@ import { tel } from '../statistiek'
 import '../components/Modal.css'
 import './Account.css'
 
-export type AccountStart = { soort: 'uitnodiging' | 'wachtwoord'; token: string } | null
+export type AccountStart = { soort: 'uitnodiging' | 'wachtwoord' | 'aanmelding'; token: string } | null
 
-type Weergave = { soort: 'hoofd' } | { soort: 'team'; id: string } | { soort: 'uitnodiging'; token: string } | { soort: 'wachtwoord'; token: string }
+type Weergave = { soort: 'hoofd' } | { soort: 'team'; id: string } | { soort: 'aanmelden' } | { soort: 'uitnodiging' | 'wachtwoord' | 'aanmelding'; token: string }
 
 const ROLLEN: Rol[] = ['beheerder', 'kijker']
 
@@ -21,12 +21,14 @@ export default function Account({ start, onClose }: { start: AccountStart; onClo
     weergave.soort === 'uitnodiging' ? 'Uitnodiging'
     : weergave.soort === 'wachtwoord' ? 'Nieuw wachtwoord'
     : weergave.soort === 'team' ? 'Team'
+    : weergave.soort === 'aanmelden' ? 'Nieuw team'
+    : weergave.soort === 'aanmelding' ? 'Teamaanmelding'
     : gebruiker ? 'Account' : 'Inloggen'
 
   return (
     <div className="account">
       <div className="account-kop">
-        {weergave.soort === 'team'
+        {weergave.soort === 'team' || weergave.soort === 'aanmelden'
           ? <button className="account-kop-knop" onClick={terug}>‹ Terug</button>
           : <span className="account-kop-titel">{titel}</span>}
         <button className="account-kop-knop" onClick={onClose}>Sluiten</button>
@@ -35,7 +37,11 @@ export default function Account({ start, onClose }: { start: AccountStart; onClo
         {weergave.soort === 'uitnodiging' && <UitnodigingAannemen token={weergave.token} klaar={terug} />}
         {weergave.soort === 'wachtwoord' && <WachtwoordKiezen token={weergave.token} klaar={terug} />}
         {weergave.soort === 'team' && gebruiker && <TeamBeheer id={weergave.id} gebruiker={gebruiker} weg={terug} />}
-        {weergave.soort === 'hoofd' && (gebruiker ? <Overzicht gebruiker={gebruiker} openTeam={id => setWeergave({ soort: 'team', id })} /> : <Inloggen />)}
+        {weergave.soort === 'aanmelden' && <TeamAanmelden />}
+        {weergave.soort === 'aanmelding' && <AanmeldingBeoordelen token={weergave.token} />}
+        {weergave.soort === 'hoofd' && (gebruiker
+          ? <Overzicht gebruiker={gebruiker} openTeam={id => setWeergave({ soort: 'team', id })} aanmelden={() => setWeergave({ soort: 'aanmelden' })} />
+          : <Inloggen aanmelden={() => setWeergave({ soort: 'aanmelden' })} />)}
       </div>
     </div>
   )
@@ -63,7 +69,7 @@ function SyncRegel() {
   )
 }
 
-function Inloggen({ email: startEmail = '' }: { email?: string }) {
+function Inloggen({ email: startEmail = '', aanmelden }: { email?: string; aanmelden?: () => void }) {
   const { inloggen } = useAccount()
   const [email, setEmail] = useState(startEmail)
   const [wachtwoord, setWachtwoord] = useState('')
@@ -109,11 +115,17 @@ function Inloggen({ email: startEmail = '' }: { email?: string }) {
       <Melding tekst={melding?.tekst ?? null} fout={melding?.fout} />
       <button className="btn btn-primary" type="submit" disabled={bezig || !email.trim() || !wachtwoord}>Inloggen</button>
       <button className="btn btn-secondary" type="button" onClick={vergeten} disabled={bezig}>Wachtwoord vergeten</button>
+      {aanmelden && (
+        <>
+          <p className="account-uitleg">Nog geen team in de app?</p>
+          <button className="btn btn-secondary" type="button" onClick={aanmelden}>Nieuw team aanmelden</button>
+        </>
+      )}
     </form>
   )
 }
 
-function Overzicht({ gebruiker, openTeam }: { gebruiker: Gebruiker; openTeam: (id: string) => void }) {
+function Overzicht({ gebruiker, openTeam, aanmelden }: { gebruiker: Gebruiker; openTeam: (id: string) => void; aanmelden: () => void }) {
   const { teams, teamsLaden, uitloggen, actiefTeamId, kiesTeam } = useAccount()
   const [nieuwTeam, setNieuwTeam] = useState('')
   const [fout, setFout] = useState<string | null>(null)
@@ -179,6 +191,7 @@ function Overzicht({ gebruiker, openTeam }: { gebruiker: Gebruiker; openTeam: (i
       )}
       <Melding tekst={fout} fout />
 
+      {!gebruiker.superadmin && <button className="btn btn-secondary" onClick={aanmelden}>Nog een team aanmelden</button>}
       <button className="btn btn-secondary" onClick={() => { uitloggen(); tel('uitgelogd') }}>Uitloggen</button>
     </div>
   )
@@ -464,5 +477,117 @@ function WachtwoordKiezen({ token, klaar }: { token: string; klaar: () => void }
       <Melding tekst={fout} fout />
       <button className="btn btn-primary" type="submit" disabled={bezig || wachtwoord.length < 8}>Opslaan</button>
     </form>
+  )
+}
+
+function TeamAanmelden() {
+  const { gebruiker } = useAccount()
+  const [teamnaam, setTeamnaam] = useState('')
+  const [naam, setNaam] = useState(gebruiker?.name ?? '')
+  const [email, setEmail] = useState(gebruiker?.email ?? '')
+  const [bericht, setBericht] = useState('')
+  const [bezig, setBezig] = useState(false)
+  const [fout, setFout] = useState<string | null>(null)
+  const [verstuurd, setVerstuurd] = useState(false)
+
+  const versturen = async () => {
+    setBezig(true)
+    setFout(null)
+    try {
+      await pb.send('/api/hockey/aanmelding', { method: 'POST', body: { teamnaam, naam, email, bericht, terug: appAdres() } })
+      tel('team-aangemeld')
+      setVerstuurd(true)
+    } catch (err) {
+      setFout((err as { status?: number }).status === 429 ? 'Te veel aanmeldingen. Probeer het over een uur nog eens.' : foutTekst(err))
+    }
+    setBezig(false)
+  }
+
+  if (verstuurd) {
+    return <p className="account-melding">Aanmelding verstuurd. Je krijgt een mail op {email.trim()} zodra je team is goedgekeurd.</p>
+  }
+
+  return (
+    <form className="account-form" onSubmit={e => { e.preventDefault(); versturen() }}>
+      <p className="account-uitleg">Meld je team aan. Na goedkeuring krijg je een mail om je account te maken; je wordt dan beheerder van het team.</p>
+      <label className="account-label">
+        Naam van het team
+        <input className="modal-input" placeholder="bijv. MO11-3 HC Voorbeeld" value={teamnaam} onChange={e => setTeamnaam(e.target.value)} />
+      </label>
+      <label className="account-label">
+        Je naam
+        <input className="modal-input" autoComplete="name" value={naam} onChange={e => setNaam(e.target.value)} />
+      </label>
+      <label className="account-label">
+        E-mail
+        <input className="modal-input" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
+      </label>
+      <label className="account-label">
+        Bericht (mag leeg)
+        <textarea className="modal-input account-bericht" value={bericht} onChange={e => setBericht(e.target.value)} />
+      </label>
+      <Melding tekst={fout} fout />
+      <button className="btn btn-primary" type="submit" disabled={bezig || !teamnaam.trim() || !email.includes('@')}>Aanmelding versturen</button>
+    </form>
+  )
+}
+
+interface AanmeldingInfo { teamnaam: string; naam: string; email: string; bericht: string; status: 'nieuw' | 'goedgekeurd' | 'afgewezen'; created: string }
+
+// Geopend vanuit de mail aan de superadmin. De link zelf geeft het recht om te beslissen
+function AanmeldingBeoordelen({ token }: { token: string }) {
+  const { teamsLaden, gebruiker } = useAccount()
+  const [info, setInfo] = useState<AanmeldingInfo | null>(null)
+  const [teamnaam, setTeamnaam] = useState('')
+  const [fout, setFout] = useState<string | null>(null)
+  const [bezig, setBezig] = useState(false)
+  const url = `/api/hockey/aanmelding/${encodeURIComponent(token)}`
+
+  useEffect(() => {
+    pb.send<AanmeldingInfo>(url, {})
+      .then(i => { setInfo(i); setTeamnaam(i.teamnaam) })
+      .catch(err => setFout(foutTekst(err)))
+  }, [url])
+
+  const beslis = async (besluit: 'goed' | 'af') => {
+    setBezig(true)
+    setFout(null)
+    try {
+      const r = await pb.send<{ status: AanmeldingInfo['status'] }>(url, { method: 'POST', body: { besluit, teamnaam } })
+      tel(besluit === 'goed' ? 'aanmelding-goedgekeurd' : 'aanmelding-afgewezen')
+      setInfo(i => (i ? { ...i, status: r.status, teamnaam } : i))
+      if (gebruiker) teamsLaden().catch(() => {})
+    } catch (err) {
+      setFout(foutTekst(err))
+    }
+    setBezig(false)
+  }
+
+  if (!info) return fout ? <Melding tekst={fout} fout /> : <p className="account-uitleg">Aanmelding ophalen…</p>
+
+  return (
+    <div className="account-form">
+      <div className="account-wie">
+        <span className="account-wie-naam">{info.teamnaam}</span>
+        <span className="account-wie-sub">{info.naam ? `${info.naam} · ` : ''}{info.email}</span>
+      </div>
+      {info.bericht && <p className="account-uitleg account-citaat">{info.bericht}</p>}
+      {info.status === 'nieuw' ? (
+        <>
+          <label className="account-label">
+            Teamnaam (kun je nog aanpassen)
+            <input className="modal-input" value={teamnaam} onChange={e => setTeamnaam(e.target.value)} />
+          </label>
+          <Melding tekst={fout} fout />
+          <button className="btn btn-primary" onClick={() => beslis('goed')} disabled={bezig || !teamnaam.trim()}>Goedkeuren</button>
+          <button className="btn btn-gevaar" onClick={() => beslis('af')} disabled={bezig}>Afwijzen</button>
+          <p className="account-uitleg">Goedkeuren maakt het team aan en mailt {info.email} een uitnodiging als beheerder.</p>
+        </>
+      ) : (
+        <p className={`account-melding ${info.status === 'afgewezen' ? 'fout' : ''}`}>
+          {info.status === 'goedgekeurd' ? `Goedgekeurd: ${info.teamnaam} is aangemaakt en ${info.email} heeft een uitnodiging gekregen.` : 'Deze aanmelding is afgewezen.'}
+        </p>
+      )}
+    </div>
   )
 }
