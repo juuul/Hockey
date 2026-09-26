@@ -1,0 +1,270 @@
+.account {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 2px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.account-kop-titel {
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  color: #1f2937;
+  padding-left: 6px;
+}
+
+.account-kop-knop {
+  min-height: 60px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-inhoud {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 10px 24px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-form .modal-input {
+  margin-bottom: 0;
+}
+
+.account-form .btn {
+  flex: 0 0 auto;
+}
+
+.account-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  color: #374151;
+}
+
+.account-uitleg {
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+  line-height: 1.3;
+}
+
+.account-melding {
+  font-size: var(--base-readable-size);
+  line-height: 1.3;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.account-melding.fout {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.account-wie {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  background: #eef2ff;
+  border-radius: 10px;
+}
+
+.account-wie-naam {
+  font-size: calc(var(--base-readable-size) * 1.15);
+  font-weight: 700;
+  color: #1e3a8a;
+  overflow-wrap: anywhere;
+}
+
+.account-wie-sub {
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
+.account-lijst {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-regel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 68px;
+  padding: 6px 6px 6px 14px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: inherit;
+  text-align: left;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+button.account-regel:active:not(:disabled) {
+  background: #eef2ff;
+}
+
+button.account-regel:disabled {
+  cursor: default;
+  background: #f9fafb;
+}
+
+.account-regel-tekst {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-regel-naam {
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-regel-sub {
+  flex-shrink: 0;
+  font-size: var(--base-readable-size);
+  color: #4b5563;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.account-weg {
+  min-width: 60px;
+  min-height: 60px;
+  border: none;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: var(--base-readable-size);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.account-rij {
+  display: flex;
+  gap: 8px;
+}
+
+.account-rij .modal-input {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.account-rij-knop {
+  flex: 0 0 auto;
+}
+
+.account-rollen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-rol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 68px;
+  padding: 8px 14px;
+  border: 3px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  font-family: inherit;
+  text-align: left;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.account-rol.actief {
+  border-color: #1e40af;
+  background: #1e40af;
+  color: white;
+}
+
+.account-rol-naam {
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+}
+
+.account-rol-uitleg {
+  font-size: var(--base-readable-size);
+  opacity: 0.85;
+}
+
+.account .btn-gevaar,
+.account .modal .btn-gevaar {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 2px solid #fca5a5;
+}
+
+.account .knop-rood {
+  background: #dc2626;
+}
+
+.account-knop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  padding: 6px 14px;
+  background: #eef2ff;
+  border: 2px solid #c7d2fe;
+  border-radius: 10px;
+  font-family: inherit;
+  text-align: left;
+  color: #1e3a8a;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.account-knop-tekst {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

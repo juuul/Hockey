@@ -1,0 +1,430 @@
+import { useEffect, useState } from 'react'
+import { useAccount } from '../context/AccountContext'
+import { appAdres, foutTekst, Gebruiker, pb, Rol, ROL_TEKST, ROL_UITLEG, ROL_VELD, rolIn, Uitnodiging } from '../server'
+import { tel } from '../statistiek'
+import '../components/Modal.css'
+import './Account.css'
+
+export type AccountStart = { soort: 'uitnodiging' | 'wachtwoord'; token: string } | null
+
+type Weergave = { soort: 'hoofd' } | { soort: 'team'; id: string } | { soort: 'uitnodiging'; token: string } | { soort: 'wachtwoord'; token: string }
+
+const ROLLEN: Rol[] = ['beheerder', 'bewerker', 'kijker']
+
+export default function Account({ start, onClose }: { start: AccountStart; onClose: () => void }) {
+  const { gebruiker } = useAccount()
+  const [weergave, setWeergave] = useState<Weergave>(start ?? { soort: 'hoofd' })
+  const terug = () => setWeergave({ soort: 'hoofd' })
+
+  const titel =
+    weergave.soort === 'uitnodiging' ? 'Uitnodiging'
+    : weergave.soort === 'wachtwoord' ? 'Nieuw wachtwoord'
+    : weergave.soort === 'team' ? 'Team'
+    : gebruiker ? 'Account' : 'Inloggen'
+
+  return (
+    <div className="account">
+      <div className="account-kop">
+        {weergave.soort === 'team'
+          ? <button className="account-kop-knop" onClick={terug}>‹ Terug</button>
+          : <span className="account-kop-titel">{titel}</span>}
+        <button className="account-kop-knop" onClick={onClose}>Sluiten</button>
+      </div>
+      <div className="account-inhoud">
+        {weergave.soort === 'uitnodiging' && <UitnodigingAannemen token={weergave.token} klaar={terug} />}
+        {weergave.soort === 'wachtwoord' && <WachtwoordKiezen token={weergave.token} klaar={terug} />}
+        {weergave.soort === 'team' && gebruiker && <TeamBeheer id={weergave.id} gebruiker={gebruiker} weg={terug} />}
+        {weergave.soort === 'hoofd' && (gebruiker ? <Overzicht gebruiker={gebruiker} openTeam={id => setWeergave({ soort: 'team', id })} /> : <Inloggen />)}
+      </div>
+    </div>
+  )
+}
+
+function Melding({ tekst, fout }: { tekst: string | null; fout?: boolean }) {
+  if (!tekst) return null
+  return <p className={`account-melding ${fout ? 'fout' : ''}`} role={fout ? 'alert' : 'status'}>{tekst}</p>
+}
+
+function Inloggen({ email: startEmail = '' }: { email?: string }) {
+  const { inloggen } = useAccount()
+  const [email, setEmail] = useState(startEmail)
+  const [wachtwoord, setWachtwoord] = useState('')
+  const [bezig, setBezig] = useState(false)
+  const [melding, setMelding] = useState<{ tekst: string; fout: boolean } | null>(null)
+
+  const login = async () => {
+    setBezig(true)
+    setMelding(null)
+    try {
+      await inloggen(email, wachtwoord)
+      tel('ingelogd')
+    } catch (err) {
+      setMelding({ tekst: (err as { status?: number }).status === 400 ? 'E-mail of wachtwoord klopt niet.' : foutTekst(err), fout: true })
+    }
+    setBezig(false)
+  }
+
+  const vergeten = async () => {
+    if (!email.trim()) return setMelding({ tekst: 'Vul eerst je e-mailadres in.', fout: true })
+    setBezig(true)
+    try {
+      await pb.collection('users').requestPasswordReset(email.trim().toLowerCase())
+      setMelding({ tekst: `Als ${email.trim()} bekend is, staat er nu een mail klaar om een nieuw wachtwoord te kiezen.`, fout: false })
+      tel('wachtwoord-vergeten')
+    } catch (err) {
+      setMelding({ tekst: foutTekst(err), fout: true })
+    }
+    setBezig(false)
+  }
+
+  return (
+    <form className="account-form" onSubmit={e => { e.preventDefault(); login() }}>
+      <p className="account-uitleg">Inloggen is nodig om met anderen te delen. Je krijgt toegang via een uitnodiging per e-mail.</p>
+      <label className="account-label">
+        E-mail
+        <input className="modal-input" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
+      </label>
+      <label className="account-label">
+        Wachtwoord
+        <input className="modal-input" type="password" autoComplete="current-password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} />
+      </label>
+      <Melding tekst={melding?.tekst ?? null} fout={melding?.fout} />
+      <button className="btn btn-primary" type="submit" disabled={bezig || !email.trim() || !wachtwoord}>Inloggen</button>
+      <button className="btn btn-secondary" type="button" onClick={vergeten} disabled={bezig}>Wachtwoord vergeten</button>
+    </form>
+  )
+}
+
+function Overzicht({ gebruiker, openTeam }: { gebruiker: Gebruiker; openTeam: (id: string) => void }) {
+  const { teams, teamsLaden, uitloggen } = useAccount()
+  const [nieuwTeam, setNieuwTeam] = useState('')
+  const [fout, setFout] = useState<string | null>(null)
+
+  useEffect(() => { teamsLaden().catch(err => setFout(foutTekst(err))) }, [teamsLaden])
+
+  const maakTeam = async () => {
+    try {
+      await pb.collection('teams').create({ naam: nieuwTeam.trim() })
+      setNieuwTeam('')
+      tel('team-gemaakt')
+      await teamsLaden()
+    } catch (err) {
+      setFout(foutTekst(err))
+    }
+  }
+
+  return (
+    <div className="account-form">
+      <div className="account-wie">
+        <span className="account-wie-naam">{gebruiker.name || gebruiker.email}</span>
+        {gebruiker.name && <span className="account-wie-sub">{gebruiker.email}</span>}
+        {gebruiker.superadmin && <span className="account-wie-sub">Superadmin</span>}
+      </div>
+
+      <h2 className="section-title">Teams</h2>
+      {teams.length === 0 && <p className="account-uitleg">Je zit nog in geen enkel team.</p>}
+      <div className="account-lijst">
+        {teams.map(t => {
+          const rol = rolIn(t, gebruiker.id)
+          const magBeheren = gebruiker.superadmin || rol === 'beheerder'
+          return (
+            <button key={t.id} className="account-regel" onClick={() => openTeam(t.id)} disabled={!magBeheren}>
+              <span className="account-regel-naam">{t.naam}</span>
+              <span className="account-regel-sub">{rol ? ROL_TEKST[rol] : 'Superadmin'}{magBeheren ? ' ›' : ''}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {gebruiker.superadmin && (
+        <form className="account-rij" onSubmit={e => { e.preventDefault(); if (nieuwTeam.trim()) maakTeam() }}>
+          <input className="modal-input" placeholder="Naam nieuw team" value={nieuwTeam} onChange={e => setNieuwTeam(e.target.value)} />
+          <button className="btn btn-primary account-rij-knop" type="submit" disabled={!nieuwTeam.trim()}>+ Team</button>
+        </form>
+      )}
+      <Melding tekst={fout} fout />
+
+      <button className="btn btn-secondary" onClick={() => { uitloggen(); tel('uitgelogd') }}>Uitloggen</button>
+    </div>
+  )
+}
+
+function TeamBeheer({ id, gebruiker, weg }: { id: string; gebruiker: Gebruiker; weg: () => void }) {
+  const { teams, teamsLaden } = useAccount()
+  const team = teams.find(t => t.id === id)
+  const [uitnodigingen, setUitnodigingen] = useState<Uitnodiging[]>([])
+  const [email, setEmail] = useState('')
+  const [rol, setRol] = useState<Rol>('bewerker')
+  const [lid, setLid] = useState<Gebruiker | null>(null)
+  const [verwijderVraag, setVerwijderVraag] = useState(false)
+  const [melding, setMelding] = useState<{ tekst: string; fout: boolean } | null>(null)
+  const [bezig, setBezig] = useState(false)
+  const sa = gebruiker.superadmin
+
+  const uitnodigingenLaden = () =>
+    pb.collection('uitnodigingen').getFullList<Uitnodiging>({ filter: pb.filter('team = {:id}', { id }), sort: '-created' }).then(setUitnodigingen)
+
+  useEffect(() => { uitnodigingenLaden().catch(() => {}) }, [id])
+
+  if (!team) return <p className="account-uitleg">Team niet gevonden.</p>
+
+  const leden = ROLLEN.flatMap(r => (team.expand?.[ROL_VELD[r]] ?? []).map(g => ({ g, rol: r })))
+
+  const doe = async (actie: () => Promise<unknown>, gelukt?: string) => {
+    setBezig(true)
+    setMelding(null)
+    try {
+      await actie()
+      if (gelukt) setMelding({ tekst: gelukt, fout: false })
+    } catch (err) {
+      setMelding({ tekst: foutTekst(err), fout: true })
+    }
+    setBezig(false)
+  }
+
+  const nodigUit = () => doe(async () => {
+    await pb.collection('uitnodigingen').create({ team: id, email: email.trim(), rol, terug: appAdres() })
+    tel('uitgenodigd')
+    await uitnodigingenLaden()
+    setEmail('')
+  }, `Uitnodiging gemaild naar ${email.trim()}.`)
+
+  // Een beheerder mag het veld 'beheerders' niet meesturen; alleen de superadmin wijzigt beheerders
+  const zetRol = (userId: string, nieuw: Rol | null) => doe(async () => {
+    const velden: Partial<Record<'beheerders' | 'bewerkers' | 'kijkers', string[]>> = {}
+    for (const r of ROLLEN) {
+      const veld = ROL_VELD[r]
+      const lijst = team[veld].filter(x => x !== userId)
+      if (r === nieuw) lijst.push(userId)
+      if (lijst.length !== team[veld].length || r === nieuw) velden[veld] = lijst
+    }
+    await pb.collection('teams').update(id, velden)
+    tel(nieuw ? 'rol-gewijzigd' : 'lid-verwijderd')
+    await teamsLaden()
+    setLid(null)
+  })
+
+  const lidRol = lid ? rolIn(team, lid.id) : null
+  const mogelijkeRollen = ROLLEN.filter(r => sa || r !== 'beheerder')
+
+  return (
+    <div className="account-form">
+      <div className="account-wie">
+        <span className="account-wie-naam">{team.naam}</span>
+      </div>
+
+      <h2 className="section-title">Leden</h2>
+      <div className="account-lijst">
+        {leden.map(({ g, rol: r }) => (
+          <button
+            key={g.id}
+            className="account-regel"
+            onClick={() => setLid(g)}
+            disabled={g.id === gebruiker.id || (r === 'beheerder' && !sa)}
+          >
+            <span className="account-regel-tekst">
+              <span className="account-regel-naam">{g.name || g.email}</span>
+              {g.name && <span className="account-regel-sub">{g.email}</span>}
+            </span>
+            <span className="account-regel-sub">{ROL_TEKST[r]}</span>
+          </button>
+        ))}
+      </div>
+
+      {uitnodigingen.length > 0 && (
+        <>
+          <h2 className="section-title">Uitgenodigd</h2>
+          <div className="account-lijst">
+            {uitnodigingen.map(u => (
+              <div key={u.id} className="account-regel">
+                <span className="account-regel-tekst">
+                  <span className="account-regel-naam">{u.email}</span>
+                  <span className="account-regel-sub">{ROL_TEKST[u.rol]}</span>
+                </span>
+                <button
+                  className="account-weg"
+                  aria-label={`Uitnodiging voor ${u.email} intrekken`}
+                  onClick={() => doe(async () => { await pb.collection('uitnodigingen').delete(u.id); await uitnodigingenLaden() })}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <h2 className="section-title">Iemand uitnodigen</h2>
+      <form className="account-form" onSubmit={e => { e.preventDefault(); nodigUit() }}>
+        <input className="modal-input" type="email" placeholder="E-mailadres" value={email} onChange={e => setEmail(e.target.value)} />
+        <div className="account-rollen" role="radiogroup" aria-label="Rol">
+          {mogelijkeRollen.map(r => (
+            <button key={r} type="button" role="radio" aria-checked={rol === r} className={`account-rol ${rol === r ? 'actief' : ''}`} onClick={() => setRol(r)}>
+              <span className="account-rol-naam">{ROL_TEKST[r]}</span>
+              <span className="account-rol-uitleg">{ROL_UITLEG[r]}</span>
+            </button>
+          ))}
+        </div>
+        <button className="btn btn-primary" type="submit" disabled={bezig || !email.includes('@')}>Uitnodiging mailen</button>
+      </form>
+      <Melding tekst={melding?.tekst ?? null} fout={melding?.fout} />
+
+      {sa && <button className="btn btn-gevaar" onClick={() => setVerwijderVraag(true)}>Team verwijderen</button>}
+
+      {lid && (
+        <div className="modal show" onClick={() => setLid(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">{lid.name || lid.email}</div>
+            <div className="modal-options">
+              {mogelijkeRollen.map(r => (
+                <button key={r} className={`modal-option ${lidRol === r ? 'selected' : ''}`} disabled={bezig} onClick={() => zetRol(lid.id, r)}>
+                  <span className="modal-option-name">{ROL_TEKST[r]}</span>
+                </button>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setLid(null)}>Annuleren</button>
+              <button className="btn btn-gevaar" disabled={bezig} onClick={() => zetRol(lid.id, null)}>Uit team</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {verwijderVraag && (
+        <div className="modal show">
+          <div className="modal-content">
+            <div className="modal-title">Team verwijderen?</div>
+            <div className="modal-subtitle">{team.naam} en alle uitnodigingen verdwijnen. Accounts blijven bestaan.</div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setVerwijderVraag(false)}>Annuleren</button>
+              <button
+                className="btn btn-primary knop-rood"
+                onClick={() => doe(async () => { await pb.collection('teams').delete(id); tel('team-verwijderd'); await teamsLaden(); weg() })}
+              >
+                Verwijderen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface UitnodigingInfo { team: string; email: string; rol: Rol; bestaat: boolean }
+
+function UitnodigingAannemen({ token, klaar }: { token: string; klaar: () => void }) {
+  const { gebruiker, inloggen, teamsLaden } = useAccount()
+  const [info, setInfo] = useState<UitnodigingInfo | null>(null)
+  const [fout, setFout] = useState<string | null>(null)
+  const [naam, setNaam] = useState('')
+  const [wachtwoord, setWachtwoord] = useState('')
+  const [bezig, setBezig] = useState(false)
+  const [inlogNodig, setInlogNodig] = useState<string | null>(null)
+
+  useEffect(() => {
+    pb.send<UitnodigingInfo>(`/api/hockey/uitnodiging/${encodeURIComponent(token)}`, {})
+      .then(setInfo)
+      .catch(err => setFout(foutTekst(err)))
+  }, [token])
+
+  const aannemen = async () => {
+    if (!info) return
+    setBezig(true)
+    setFout(null)
+    try {
+      await pb.send(`/api/hockey/uitnodiging/${encodeURIComponent(token)}`, { method: 'POST', body: { naam, wachtwoord } })
+      tel('uitnodiging-aangenomen')
+      if (!info.bestaat) {
+        await inloggen(info.email, wachtwoord)
+        klaar()
+      } else if (gebruiker?.email === info.email) {
+        await teamsLaden()
+        klaar()
+      } else {
+        if (gebruiker) pb.authStore.clear()
+        setInlogNodig(info.email)
+      }
+    } catch (err) {
+      setFout(foutTekst(err))
+    }
+    setBezig(false)
+  }
+
+  if (inlogNodig) {
+    return (
+      <>
+        <p className="account-melding">Je bent toegevoegd. Log in met je bestaande wachtwoord.</p>
+        <Inloggen email={inlogNodig} />
+      </>
+    )
+  }
+  if (fout && !info) return <Melding tekst={fout} fout />
+  if (!info) return <p className="account-uitleg">Uitnodiging ophalen…</p>
+
+  return (
+    <form className="account-form" onSubmit={e => { e.preventDefault(); aannemen() }}>
+      <p className="account-uitleg">
+        Je bent uitgenodigd voor <strong>{info.team}</strong> als {ROL_TEKST[info.rol].toLowerCase()} ({ROL_UITLEG[info.rol]}).
+      </p>
+      <p className="account-uitleg">Account: <strong>{info.email}</strong></p>
+      {!info.bestaat && (
+        <>
+          <input type="email" autoComplete="username" value={info.email} readOnly hidden />
+          <label className="account-label">
+            Je naam
+            <input className="modal-input" autoComplete="name" value={naam} onChange={e => setNaam(e.target.value)} />
+          </label>
+          <label className="account-label">
+            Kies een wachtwoord (minstens 8 tekens)
+            <input className="modal-input" type="password" autoComplete="new-password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} />
+          </label>
+        </>
+      )}
+      <Melding tekst={fout} fout />
+      <button className="btn btn-primary" type="submit" disabled={bezig || (!info.bestaat && wachtwoord.length < 8)}>
+        {info.bestaat ? 'Toevoegen aan team' : 'Account maken'}
+      </button>
+    </form>
+  )
+}
+
+function WachtwoordKiezen({ token, klaar }: { token: string; klaar: () => void }) {
+  const [wachtwoord, setWachtwoord] = useState('')
+  const [fout, setFout] = useState<string | null>(null)
+  const [gelukt, setGelukt] = useState(false)
+  const [bezig, setBezig] = useState(false)
+
+  const opslaan = async () => {
+    setBezig(true)
+    setFout(null)
+    try {
+      await pb.collection('users').confirmPasswordReset(token, wachtwoord, wachtwoord)
+      tel('wachtwoord-gewijzigd')
+      setGelukt(true)
+    } catch (err) {
+      setFout((err as { status?: number }).status === 400 ? 'Deze link is verlopen of al gebruikt. Vraag een nieuwe aan via Wachtwoord vergeten.' : foutTekst(err))
+    }
+    setBezig(false)
+  }
+
+  if (gelukt) {
+    return (
+      <div className="account-form">
+        <p className="account-melding">Je wachtwoord is gewijzigd. Log nu in.</p>
+        <button className="btn btn-primary" onClick={klaar}>Naar inloggen</button>
+      </div>
+    )
+  }
+
+  return (
+    <form className="account-form" onSubmit={e => { e.preventDefault(); opslaan() }}>
+      <label className="account-label">
+        Nieuw wachtwoord (minstens 8 tekens)
+        <input className="modal-input" type="password" autoComplete="new-password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} />
+      </label>
+      <Melding tekst={fout} fout />
+      <button className="btn btn-primary" type="submit" disabled={bezig || wachtwoord.length < 8}>Opslaan</button>
+    </form>
+  )
+}

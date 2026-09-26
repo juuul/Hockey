@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
+import { useAccount } from '../context/AccountContext'
 import { OPSTELLINGEN_PER_SPELVORM, Player } from '../types'
 import AddPlayerModal from '../components/AddPlayerModal'
 import DeletePlayerModal from '../components/DeletePlayerModal'
 import { tel } from '../statistiek'
 import './Players.css'
+import './Account.css'
 
-export default function Players() {
+export default function Players({ openAccount }: { openAccount: () => void }) {
+  const { gebruiker, teams } = useAccount()
   const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, opstelling, kiesOpstelling } = useHockey()
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -41,6 +44,13 @@ export default function Players() {
 
   return (
     <div className="players-screen">
+      <button className="account-knop" onClick={openAccount}>
+        <span aria-hidden="true">👤</span>
+        <span className="account-knop-tekst">
+          {gebruiker ? `${gebruiker.name || gebruiker.email}${teams.length === 1 ? ` · ${teams[0].naam}` : ''}` : 'Inloggen'}
+        </span>
+        <span aria-hidden="true">›</span>
+      </button>
       <div className="spelvorm" role="radiogroup" aria-label="Spelvorm">
         {([9, 6] as const).map(v => (
           <button

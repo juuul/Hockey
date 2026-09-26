@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HockeyProvider } from './context/HockeyContext'
+import { AccountProvider } from './context/AccountContext'
+import Account, { AccountStart } from './screens/Account'
 import Dashboard from './screens/Dashboard'
 import Players from './screens/Players'
 import Positions from './screens/Positions'
@@ -20,6 +22,15 @@ const TABS: { id: Scherm; icoon: string; naam: string }[] = [
 function AppContent() {
   const [screen, setScreen] = useState<Scherm>('dashboard')
   const scrollVak = useRef<HTMLDivElement>(null)
+  const [account, setAccount] = useState<{ start: AccountStart } | null>(null)
+
+  // Links uit de mail: #uitnodiging=… of #wachtwoord=…. Daarna het # weghalen, zodat verversen het niet opnieuw opent
+  useEffect(() => {
+    const m = window.location.hash.match(/^#(uitnodiging|wachtwoord)=(.+)$/)
+    if (!m) return
+    setAccount({ start: { soort: m[1] as 'uitnodiging' | 'wachtwoord', token: decodeURIComponent(m[2]) } })
+    history.replaceState(null, '', window.location.pathname + window.location.search)
+  }, [])
 
   return (
     <div className="mobile-frame">
@@ -40,19 +51,22 @@ function AppContent() {
 
       <div className="content" ref={scrollVak}>
         {screen === 'dashboard' && <Dashboard />}
-        {screen === 'players' && <Players />}
+        {screen === 'players' && <Players openAccount={() => setAccount({ start: null })} />}
         {screen === 'positions' && <Positions />}
         {screen === 'historie' && <Historie />}
       </div>
       <Verversen scrollVak={scrollVak} />
+      {account && <Account start={account.start} onClose={() => setAccount(null)} />}
     </div>
   )
 }
 
 export default function App() {
   return (
-    <HockeyProvider>
-      <AppContent />
-    </HockeyProvider>
+    <AccountProvider>
+      <HockeyProvider>
+        <AppContent />
+      </HockeyProvider>
+    </AccountProvider>
   )
 }
