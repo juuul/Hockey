@@ -84,12 +84,13 @@ export function stempelInkomers(oud: Player[], nieuw: Player[]): Player[] {
 
 export type VeldKleur = 'groen' | 'oranje' | 'rood'
 
-// Op volgorde van invallen: eerst erin = groen, laatst erin = rood. Staat iedereen er even lang (zelfde moment), dan geen kleur
+// Op volgorde van invallen: laatste 2 invallers rood, 2 daarvoor oranje, de rest (ook de basis) groen
 export function veldKleuren(veldspelers: Player[]): Record<string, VeldKleur> {
-  const momenten = [...new Set(veldspelers.map(s => s.inVolgorde ?? 0))].sort((a, b) => a - b)
-  if (momenten.length < 2) return {}
+  const invallers = veldspelers
+    .filter(s => (s.inVolgorde ?? 0) > 0)
+    .sort((a, b) => (b.inVolgorde ?? 0) - (a.inVolgorde ?? 0))
   return Object.fromEntries(veldspelers.map(s => {
-    const t = momenten.indexOf(s.inVolgorde ?? 0) / (momenten.length - 1)
-    return [s.id, t < 1 / 3 ? 'groen' : t > 2 / 3 ? 'rood' : 'oranje']
+    const plek = invallers.indexOf(s)
+    return [s.id, plek === -1 || plek >= 4 ? 'groen' : plek < 2 ? 'rood' : 'oranje']
   }))
 }
