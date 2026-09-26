@@ -28,7 +28,7 @@ interface HockeyContextType {
 }
 
 // Test en live delen dezelfde origin (github.io), dus aparte opslag
-const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
+export const OPSLAG = import.meta.env.MODE === 'test' ? 'hockey_test' : 'hockey'
 
 const HockeyContext = createContext<HockeyContextType | undefined>(undefined)
 

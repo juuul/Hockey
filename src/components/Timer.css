@@ -1,0 +1,43 @@
+.timer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.timer-tijd {
+  text-align: center;
+  font-size: calc(var(--base-readable-size) * 2);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer.loopt .timer-tijd {
+  color: #047857;
+}
+
+.timer-knoppen {
+  display: flex;
+  gap: 8px;
+}
+
+.timer-knoppen .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 4px;
+}
+
+.timer-start {
+  background: #047857;
+  color: white;
+}
+
+.timer-start:active {
+  background: #065f46;
+}

@@ -3,6 +3,7 @@ import { useHockey } from '../context/HockeyContext'
 import { Position, POSITIE_LABEL } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
+import Timer from '../components/Timer'
 import { tel } from '../statistiek'
 import { sorteerWissels } from '../opstelling'
 import './Dashboard.css'
@@ -128,6 +129,7 @@ export default function Dashboard() {
       <button className="btn btn-secondary" onClick={() => setVraag('opstelling')}>Nieuwe opstelling</button>
       <button className="btn btn-secondary" onClick={() => setVraag('wissels')}>Reset wissels</button>
       <button className="btn btn-secondary" onClick={() => { resetScore(); tel('score-reset') }} disabled={score.wij === 0 && score.zij === 0}>Score 0 – 0</button>
+      <Timer />
 
       {showSubstituteModal && (
         <SubstituteModal
