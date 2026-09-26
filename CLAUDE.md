@@ -115,3 +115,4 @@ Sleutels `hockey_<naam>` op live en `hockey_test_<naam>` op test (zelfde domein,
 - Domein `juliaan.eu` hoort bij de repo `juuul/juuul.github.io` (startpagina met knoppen naar /hockey/ en financeplannerapp.com, lokaal in `/home/metime/projects/juuul.github.io`); deze repo verschijnt daardoor op `/hockey/`. Paden zijn hoofdlettergevoelig: repo heet `hockey`.
 - DNS bij zxcs/Vimexx (A + AAAA naar GitHub Pages). De lokale resolver op deze machine cachet soms nog een oud parkeeradres; controleer live dan met `curl --resolve juliaan.eu:443:185.199.108.153 ...`.
 - GitHub Pages cachet pagina's tot 10 minuten; de gebruiker ververst door de pagina omlaag te trekken.
+- Bij elke publicatie verdwijnen de oude `assets/index-*.js/css`. Een telefoon met de oude `index.html` in de cache kreeg daardoor een leeg scherm; het inline script in `index.html` laadt dan één keer opnieuw met `?v=…` (buiten de cache), `main.tsx` ruimt dat weer op.
