@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
+import { useAccount } from '../context/AccountContext'
 import { OPSTELLINGEN, Position, POSITIE_LABEL } from '../types'
 import SubstituteModal from '../components/SubstituteModal'
 import ResetModal from '../components/ResetModal'
@@ -11,7 +12,8 @@ import { tel } from '../statistiek'
 import { sorteerWissels, veldKleuren } from '../opstelling'
 import './Dashboard.css'
 
-export default function Dashboard() {
+export default function Dashboard({ openAccount }: { openAccount: () => void }) {
+  const { gebruiker } = useAccount()
   const { spelers, wisselingen, wissel, resetWissels, nieuweOpstelling, verplaats, plaatsIn, undo, canUndo, score, scoor, resetScore, doelpunten, spelvorm, opstelling, allesResetten, clubs, wedstrijd, zetWedstrijd, wedstrijdAfsluiten, magBewerken } = useHockey()
   const [showSubstituteModal, setShowSubstituteModal] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState<Position>('LW')
@@ -104,6 +106,12 @@ export default function Dashboard() {
   return (
     <>
     <div className="dashboard">
+      {/* Alleen zonder account: de weg naar inloggen. Ingelogd staat het account onder Spelers */}
+      {!gebruiker && (
+        <button className="inlog-balk" onClick={openAccount}>
+          <span aria-hidden="true">👤</span> Inloggen
+        </button>
+      )}
       <div className="score-regel">
         <button className="score-min" onClick={() => { scoor('wij', -1); tel('score-wij-min') }} disabled={!magBewerken || score.wij === 0} aria-label="Doelpunt wij eraf">−</button>
         <button className="score-team wij" onClick={() => setKiesScorer(true)} disabled={!magBewerken} aria-label={`Wij ${score.wij}, doelpunt erbij`}>

@@ -52,7 +52,7 @@ function AppContent() {
       </nav>
 
       <div className="content" ref={scrollVak}>
-        {screen === 'dashboard' && <Dashboard />}
+        {screen === 'dashboard' && <Dashboard openAccount={() => setAccount({ start: null })} />}
         {screen === 'players' && <Players openAccount={() => setAccount({ start: null })} />}
         {screen === 'positions' && <Positions />}
         {screen === 'historie' && <Historie />}

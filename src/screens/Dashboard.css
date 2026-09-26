@@ -386,3 +386,24 @@
   background: #eef2ff;
   border-radius: 8px;
 }
+
+.inlog-balk {
+  flex: 0 0 auto;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid #c7d2fe;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #1e3a8a;
+  font-family: inherit;
+  font-size: var(--base-readable-size);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inlog-balk:active {
+  background: #e0e7ff;
+}
