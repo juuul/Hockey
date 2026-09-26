@@ -6,7 +6,7 @@ import './Positions.css'
 const KEUZE_NAAM = ['1e keuze', '2e keuze']
 
 export default function Positions() {
-  const { spelers, vastePosities, setVastePositie, spelvorm } = useHockey()
+  const { spelers, vastePosities, setVastePositie, opstelling } = useHockey()
   const fieldPlayers = spelers.filter(s => !s.isKeeper)
 
   const handleSetPosition = (spelerId: string, keuze: number, positie: Position | null) => {
@@ -38,7 +38,7 @@ export default function Positions() {
                       onChange={(e) => handleSetPosition(player.id, keuze, e.target.value ? (e.target.value as Position) : null)}
                     >
                       <option value="">Geen {KEUZE_NAAM[keuze]}</option>
-                      {veldPosities(spelvorm).map(pos => {
+                      {veldPosities(opstelling).map(pos => {
                         const ook = fieldPlayers.filter(p => p.id !== player.id && vastePosities[p.id]?.includes(pos)).map(p => p.naam)
                         return (
                           <option key={pos} value={pos}>

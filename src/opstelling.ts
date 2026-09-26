@@ -1,4 +1,4 @@
-import { Player, Position, VELD_VOLGORDE, Wissel } from './types'
+import { Player, Position, Wissel } from './types'
 
 function schud<T>(lijst: T[]): T[] {
   const kopie = [...lijst]
@@ -11,7 +11,7 @@ function schud<T>(lijst: T[]): T[] {
 
 // Eerst eerlijk loten wie begint, pas daarna plaatsen: anders zitten spelers met een vaste positie nooit op de bank.
 // Eerst krijgt iedereen zo mogelijk zijn 1e keuze, daarna zijn 2e. Door de geschudde volgorde wint bij een dubbele keuze een willekeurige speler.
-export function nieuweOpstelling(spelers: Player[], vastePosities: Record<string, string[]>, posities: Position[] = VELD_VOLGORDE): Player[] {
+export function nieuweOpstelling(spelers: Player[], vastePosities: Record<string, string[]>, posities: Position[]): Player[] {
   const geschud = schud(spelers.filter(s => !s.isKeeper && s.meedoen))
   const basis = geschud.slice(0, posities.length)
   const bank = geschud.slice(posities.length)
@@ -55,7 +55,7 @@ export function haalUitVeld(spelers: Player[], id: string): Player[] {
     : zonder
 }
 
-export function zetMeedoen(spelers: Player[], id: string, meedoen: boolean, posities: Position[] = VELD_VOLGORDE): Player[] {
+export function zetMeedoen(spelers: Player[], id: string, meedoen: boolean, posities: Position[]): Player[] {
   if (!meedoen) return haalUitVeld(spelers, id).map(s => s.id === id ? { ...s, meedoen: false } : s)
   const bezet = new Set(spelers.filter(s => s.inVeld && !s.isKeeper).map(s => s.positie))
   const leeg = posities.find(p => !bezet.has(p))
@@ -93,4 +93,21 @@ export function veldKleuren(veldspelers: Player[], perKleur = 2): Record<string,
     const plek = invallers.indexOf(s)
     return [s.id, plek === -1 || plek >= 2 * perKleur ? 'groen' : plek < perKleur ? 'rood' : 'oranje']
   }))
+}
+
+// Andere opstelling: wie op een bestaande positie staat blijft staan; spelers van weggevallen posities
+// schuiven willekeurig naar nieuwe plekken; te veel -> bank, te weinig -> aanvullen met minste wissels
+export function pasOpstellingAan(spelers: Player[], posities: Position[]): Player[] {
+  const veld = spelers.filter(s => s.inVeld && !s.isKeeper)
+  const blijvers = new Map<Position, Player>()
+  veld.forEach(s => { if (posities.includes(s.positie) && !blijvers.has(s.positie)) blijvers.set(s.positie, s) })
+  const vrij = posities.filter(p => !blijvers.has(p))
+  const ontheemd = schud(veld.filter(s => blijvers.get(s.positie) !== s))
+  const bank = spelers.filter(s => !s.inVeld && s.meedoen).sort((a, b) => a.wisselCount - b.wisselCount)
+  const nieuw = new Map<string, Partial<Player>>()
+  ontheemd.forEach((s, i) => nieuw.set(s.id, i < vrij.length ? { positie: vrij[i] } : { inVeld: false }))
+  bank.slice(0, Math.max(0, vrij.length - ontheemd.length)).forEach((s, i) => {
+    nieuw.set(s.id, { inVeld: true, positie: vrij[ontheemd.length + i] })
+  })
+  return spelers.map(s => nieuw.has(s.id) ? { ...s, ...nieuw.get(s.id) } : s)
 }

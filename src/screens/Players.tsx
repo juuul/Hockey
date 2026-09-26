@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useHockey } from '../context/HockeyContext'
-import { Player } from '../types'
+import { OPSTELLINGEN_PER_SPELVORM, Player } from '../types'
 import AddPlayerModal from '../components/AddPlayerModal'
 import DeletePlayerModal from '../components/DeletePlayerModal'
 import { tel } from '../statistiek'
 import './Players.css'
 
 export default function Players() {
-  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, kiesSpelvorm } = useHockey()
+  const { spelers, addSpeler, deleteSpeler, zetMeedoen, doelpunten, spelvorm, opstelling, kiesOpstelling } = useHockey()
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [playerToDelete, setPlayerToDelete] = useState<{ id: string; naam: string } | null>(null)
@@ -48,9 +48,22 @@ export default function Players() {
             role="radio"
             aria-checked={spelvorm === v}
             className={`spelvorm-knop ${spelvorm === v ? 'actief' : ''}`}
-            onClick={() => { kiesSpelvorm(v); tel(`spelvorm-${v}`) }}
+            onClick={() => { if (v !== spelvorm) { kiesOpstelling(OPSTELLINGEN_PER_SPELVORM[v][0]); tel(`spelvorm-${v}`) } }}
           >
             {v} spelers
+          </button>
+        ))}
+      </div>
+      <div className="spelvorm" role="radiogroup" aria-label="Opstelling">
+        {OPSTELLINGEN_PER_SPELVORM[spelvorm].map(naam => (
+          <button
+            key={naam}
+            role="radio"
+            aria-checked={opstelling === naam}
+            className={`spelvorm-knop ${opstelling === naam ? 'actief' : ''}`}
+            onClick={() => { kiesOpstelling(naam); tel(`opstelling-${naam}`) }}
+          >
+            {naam}
           </button>
         ))}
       </div>
